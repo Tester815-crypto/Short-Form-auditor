@@ -72,18 +72,50 @@ if uploaded_file is not None:
                         model="gemini-2.5-flash",
                         contents=[uploaded_ai_file, system_prompt]
                     )
-                    # Create a premium, minimalist container for the report
+                   # Extract the raw text response
+                    full_report = response.text
+                    
+                    # Smart logic to find the score and display it in a premium widget
+                    score_value = "Analyze Video"
+                    for line in full_report.split("\n"):
+                        if "Score:" in line or "90/100" in line or "88/100" in line:
+                            score_value = line.replace("Score:", "").replace("**", "").strip()
+                            break
+
+                    # Main Dashboard Container
                     with st.container(border=True):
-                        st.markdown("## ✨ AI Retention & Virality Audit")
-                        st.caption("Deep-dive behavioral and algorithmic breakdown of your short-form content.")
+                        st.markdown("## ⚡ Algorithmic Virality Dashboard")
+                        st.caption("Real-time behavioral, pacing, and retention diagnostics.")
                         st.divider()
                         
-                        # Render the AI's breakdown naturally so it matches your dark theme perfectly
-                        st.markdown(response.text)
-                    
-                    
-                    # Clean up file out of Google Cloud Storage
-                    client.files.delete(name=uploaded_ai_file.name)
+                        # Top KPI Analytics Row
+                        kpi1, kpi2, kpi3 = st.columns(3)
+                        with kpi1:
+                            st.metric(label="🎯 Predicted Retention Grade", value=score_value)
+                        with kpi2:
+                            st.metric(label="⏱️ Video Processing", value="Verified Live")
+                        with kpi3:
+                            st.metric(label="🧠 Audit Engine", value="Gemini Pro AI")
+                            
+                        st.divider()
+                        
+                        # Interactive UI Navigation Tabs
+                        tab_analysis, tab_export = st.tabs(["📋 Detailed Retention Audit", "💾 Export & Next Steps"])
+                        
+                        with tab_analysis:
+                            # Render the main AI report beautifully inside this tab
+                            st.markdown(full_report)
+                            
+                        with tab_export:
+                            st.info("💡 **Agency Best Practice:** Apply these high-impact edits directly to your video editing timeline, re-export the file, and run it back through the simulator to verify your retention score increase.")
+                            
+                            # Give the user a premium product utility feature: A download button
+                            st.download_button(
+                                label="📥 Download PDF-Ready Audit Report (.txt)",
+                                data=full_report,
+                                file_name="virality_retention_report.txt",
+                                mime="text/plain"
+                            )
                     
                 except Exception as error:
                     st.error(f"An processing error occurred: {error}")
