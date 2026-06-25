@@ -40,14 +40,15 @@ st.markdown("""
         color: #ffffff !important;
     }
     
-    /* Custom High-Fidelity Premium Metric Cards */
+    /* Custom High-Fidelity Premium Metric Cards with Sparklines */
     .metric-container {
         background: linear-gradient(135deg, #0f0f1a 0%, #141424 100%);
         border: 1px solid #2e2a4f;
         border-radius: 16px;
-        padding: 24px;
+        padding: 20px 20px 10px 20px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         transition: transform 0.3s ease, border-color 0.3s ease;
+        margin-bottom: -10px;
     }
     .metric-container:hover {
         border-color: #7c3aed;
@@ -55,25 +56,28 @@ st.markdown("""
     }
     .metric-title {
         color: #94a3b8;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
     .metric-value {
         color: #ffffff;
-        font-size: 36px;
+        font-size: 32px;
         font-weight: 800;
         line-height: 1;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
     }
-    .metric-delta {
+    .metric-delta-pos {
         color: #10b981;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
-        display: flex;
-        align-items: center;
+    }
+    .metric-delta-neutral {
+        color: #a78bfa;
+        font-size: 12px;
+        font-weight: 600;
     }
     
     /* Custom Premium Buttons */
@@ -114,9 +118,10 @@ st.sidebar.markdown("<h2 style='color: #a78bfa; margin-bottom: 5px;'>🔮 ViralS
 st.sidebar.markdown("<span style='background-color: #2e1065; color: #c084fc; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;'>PRO WORKSPACE</span>", unsafe_allow_html=True)
 st.sidebar.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
 
+# Account configurations completely dropped from navigation
 navigation = st.sidebar.radio(
     "NAVIGATION HUB",
-    ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing", "⚙️ Account Settings"]
+    ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing"]
 )
 
 st.sidebar.markdown("<div style='position: fixed; bottom: 20px;'>", unsafe_allow_html=True)
@@ -124,15 +129,33 @@ st.sidebar.divider()
 st.sidebar.markdown("⚡ **Account Status:** `Creator Level Tier`")
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
-# Helper function to render a premium dashboard card
-def render_metric_card(title, value, delta):
+# ==========================================
+# PREMIUM CARD SPARKLINE GRAPH ENGINE
+# ==========================================
+def render_graphical_card(title, value, delta, spark_trend, color_hex, is_neutral=False):
+    # Render text layout
+    delta_class = "metric-delta-neutral" if is_neutral else "metric-delta-pos"
     st.markdown(f"""
         <div class="metric-container">
             <div class="metric-title">{title}</div>
             <div class="metric-value">{value}</div>
-            <div class="metric-delta">{delta}</div>
+            <div class="{delta_class}">{delta}</div>
         </div>
     """, unsafe_allow_html=True)
+    
+    # Generate integrated miniature sparkline graph directly under metrics
+    fig = go.Figure(go.Scatter(y=spark_trend, mode='lines', line=dict(color=color_hex, width=2.5)))
+    fig.update_layout(
+        hovermode=False,
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=5, r=5, t=2, b=2),
+        height=45,
+        showlegend=False
+    )
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
 # ==========================================
 # 1. LIVE PERFORMANCE DASHBOARD
@@ -140,7 +163,7 @@ def render_metric_card(title, value, delta):
 if navigation == "📊 Dashboard Overview":
     h_col1, h_col2 = st.columns([3, 1])
     with h_col1:
-        st.markdown("<h1 style='margin-bottom: 0;'>Welcome back, Creator! 👋</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='margin-bottom: 0;'>Welcome back, Creator! ⚡</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color: #94a3b8; font-size: 16px;'>Here is the automated overview of your ongoing video performance indexes.</p>", unsafe_allow_html=True)
     with h_col2:
         st.write("")
@@ -149,16 +172,16 @@ if navigation == "📊 Dashboard Overview":
 
     st.divider()
 
-    # Highly Requested Dashboard Card row
+    # Premium Graphical Cards Row with unique trends matching your exact layout styles
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        render_metric_card("Videos Analyzed", "124", "▲ +18% from last month")
+        render_graphical_card("Videos Analyzed", "124", "▲ +18% from last month", [100, 105, 102, 110, 115, 112, 124], "#3b82f6")
     with c2:
-        render_metric_card("Average Score", "72 / 100", "▲ +6% from last month")
+        render_graphical_card("Average Score", "72 / 100", "▲ +6% from last month", [65, 68, 67, 70, 69, 74, 72], "#a78bfa")
     with c3:
-        render_metric_card("Best Performing", "91 / 100", "🏆 Cable Bill Hack.mp4")
+        render_graphical_card("Best Performing", "91 / 100", "🏆 Cable Bill Hack.mp4", [80, 82, 85, 84, 89, 88, 91], "#f59e0b", is_neutral=True)
     with c4:
-        render_metric_card("Hook Strength", "78%", "▲ +9% from last month")
+        render_graphical_card("Hook Strength", "78%", "▲ +9% from last month", [70, 72, 71, 75, 73, 76, 78], "#10b981")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -179,9 +202,9 @@ if navigation == "📊 Dashboard Overview":
         })
         
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df['Date'], y=df['Average Score'], mode='lines', name='Avg Score', line=dict(color='#a78bfa', width=3))) # Purple Accent
-        fig.add_trace(go.Scatter(x=df['Date'], y=df['Hook Strength'], mode='lines', name='Hook Vector', line=dict(color='#3b82f6', width=2))) # Royal Blue
-        fig.add_trace(go.Scatter(x=df['Date'], y=df['Retention Rate'], mode='lines', name='Retention Avg', line=dict(color='#10b981', width=2))) # Emerald
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Average Score'], mode='lines', name='Avg Score', line=dict(color='#a78bfa', width=3))) 
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Hook Strength'], mode='lines', name='Hook Vector', line=dict(color='#3b82f6', width=2))) 
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Retention Rate'], mode='lines', name='Retention Avg', line=dict(color='#10b981', width=2))) 
         
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
@@ -198,7 +221,6 @@ if navigation == "📊 Dashboard Overview":
         st.markdown("### 🕒 Real-Time Audit Feed")
         st.caption("Latest short-form items run through the core processor")
         
-        # High fidelity list elements matching the exact reference layout images
         st.markdown("""
         <div style='background: #0f0f1a; border: 1px solid #2e2a4f; border-radius: 12px; padding: 16px;'>
             <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1b4b; padding-bottom: 12px; margin-bottom: 12px;'>
@@ -302,10 +324,8 @@ elif navigation == "📁 Saved Video History":
     st.markdown("<p style='color: #94a3b8;'>Search, review, filter, and extract analytical reports from previously processed short-form content models.</p>", unsafe_allow_html=True)
     st.divider()
 
-    # Search Bar layout filter
     search_q = st.text_input("🔍 Search Historical Filenames", placeholder="Type a file keyword to filter data...")
     
-    # Historic Data Table Dataframe Construction
     history_data = {
         "Project Filename": ["Cable Bill Hack.mp4", "Stop Wasting Money.mp4", "Easy Phone Trick.mp4", "Hidden Features.mp4", "WiFi Booster Setup.mp4"],
         "Execution Date": ["2026-06-18", "2026-06-17", "2026-06-16", "2026-06-15", "2026-06-14"],
@@ -314,86 +334,3 @@ elif navigation == "📁 Saved Video History":
         "Platform Optimized": ["TikTok Pro", "YT Shorts", "Instagram Reels", "TikTok Pro", "YT Shorts"]
     }
     df_history = pd.DataFrame(history_data)
-    
-    if search_q:
-        df_history = df_history[df_history["Project Filename"].str.contains(search_q, case=False)]
-
-    st.dataframe(
-        df_history,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Retention Index": st.column_config.ProgressColumn("Retention Index", min_value=0, max_value=100, format="%d pts"),
-            "Project Filename": st.column_config.TextColumn("Target File Name", help="File uploaded to system core"),
-        }
-    )
-
-# ==========================================
-# 4. SUBSCRIPTION PLAN MODES
-# ==========================================
-elif navigation == "💎 Subscriptions & Pricing":
-    st.markdown("<h1>💎 Premium Architecture Tiers</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #94a3b8;'>Upgrade or scale infrastructure boundaries to suit agency rendering throughput requests.</p>", unsafe_allow_html=True)
-    st.divider()
-
-    pc1, pc2, pc3 = st.columns(3)
-    
-    with pc1:
-        st.markdown("""
-        <div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'>
-            <h3 style='color:#94a3b8;'>Starter Sandbox</h3>
-            <h2 style='font-size:36px; margin: 15px 0;'>$0 <span style='font-size:14px; color:gray;'>/ month</span></h2>
-            <hr style='border-color:#1e1b4b;'>
-            <p style='text-align:left;'>• 5 Basic Scans Monthly<br>• Max file duration 60s<br>• Core Processing Units</p>
-            <div style='margin-top:30px; padding:10px; background:#1e1b4b; border-radius:8px; color:gray; font-size:12px; font-weight:bold;'>INACTIVE IN WORKSPACE</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    with pc2:
-        st.markdown("""
-        <div style='background: linear-gradient(145deg, #180f2b 0%, #0f0f1a 100%); border: 2px solid #7c3aed; border-radius:16px; padding:24px; text-align:center; box-shadow: 0 0 25px rgba(124,58,237,0.25);'>
-            <h3 style='color:#a78bfa;'>Creator Studio Pro</h3>
-            <h2 style='font-size:36px; margin: 15px 0; color:#ffffff;'>$49 <span style='font-size:14px; color:#a78bfa;'>/ month</span></h2>
-            <hr style='border-color:#2e2a4f;'>
-            <p style='text-align:left; color:#e2e8f0;'>• Unlimited Video Engine Processing<br>• Max file duration 120s<br>• Priority Neural Grid Queue<br>• Custom Analytics Exports</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.write("")
-        st.button("✨ CURRENT WORKSPACE ACCOUNT TIER", disabled=True, use_container_width=True)
-        
-    with pc3:
-        st.markdown("""
-        <div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'>
-            <h3 style='color:#94a3b8;'>Production Scale</h3>
-            <h2 style='font-size:36px; margin: 15px 0;'>$199 <span style='font-size:14px; color:gray;'>/ month</span></h2>
-            <hr style='border-color:#1e1b4b;'>
-            <p style='text-align:left;'>• Unlimited Scans + Automation APIs<br>• Uncapped File Durations<br>• Dedicated AI Node Cluster access</p>
-            <div style='margin-top:30px;'></div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("Upgrade Workspace", key="scale_btn", use_container_width=True):
-            st.success("Redirecting gateway parameters to secure checkout node...")
-
-# ==========================================
-# 5. ACCOUNT WORKSPACE CONFIGURATIONS
-# ==========================================
-elif navigation == "⚙️ Account Settings":
-    st.markdown("<h1>⚙️ Enterprise Environment Controls</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #94a3b8;'>Modify system behavioral prompt architectures and update developer pipeline credentials.</p>", unsafe_allow_html=True)
-    st.divider()
-
-    st.markdown("### 🔌 Core Neural Credentials")
-    user_api_input = st.text_input("Gemini API Secure Passkey Override", type="password", value="••••••••••••••••••••••••••••••••••••", help="Overrides the default repository deployment secure key variables.")
-    
-    st.divider()
-    
-    st.markdown("### 🧠 Prompt Engineering Weights")
-    st.caption("Customize what metrics the retention auditor aggressively looks for during simulation pipelines.")
-    custom_framework = st.text_area(
-        "Custom Directives Prompt Modifier",
-        value="You are a professional, ruthless short-form video retention auditor trained on high-retention frameworks (like MrBeast and Ryan Trahan pacing rules). Analyze frame tracking parameters...",
-        rows=5
-    )
-    
-    if st.button("Save Workspace Modifications"):
-        st.success("Environment configuration matrix updated successfully!")
