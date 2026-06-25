@@ -1,4 +1,6 @@
 streamlit
-google-genai
 moviepy
+google-genai
 python-dotenv
+plotly
+pandas
