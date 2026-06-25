@@ -72,27 +72,15 @@ if uploaded_file is not None:
                         model="gemini-2.5-flash",
                         contents=[uploaded_ai_file, system_prompt]
                     )
-                    
-                    # Create a beautiful, bordered container for the final results
+                    # Create a premium, minimalist container for the report
                     with st.container(border=True):
-                        st.subheader("📊 Algorithmic Evaluation Summary")
+                        st.markdown("## ✨ AI Retention & Virality Audit")
+                        st.caption("Deep-dive behavioral and algorithmic breakdown of your short-form content.")
+                        st.divider()
                         
-                        # Split the screen into two clean side-by-side columns
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            st.markdown("### 🪝 The 3-Second Hook")
-                            st.caption("Analyzing pacing, initial visual framing, and audio triggers.")
-                            st.divider() 
-                            
-                        with col2:
-                            st.markdown("### 📈 Retention & Drop-offs")
-                            st.caption("Predicting drop-off points and structural friction.")
-                            st.divider()
-
-                        # Place the main AI insights in a dedicated panel right below the columns
-                        st.markdown("### 🛠️ High-Impact Fixes & Recommendations")
-                        st.info(response.text)
+                        # Render the AI's breakdown naturally so it matches your dark theme perfectly
+                        st.markdown(response.text)
+                    
                     
                     # Clean up file out of Google Cloud Storage
                     client.files.delete(name=uploaded_ai_file.name)
