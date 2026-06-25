@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from moviepy import VideoFileClip
 from google import genai
+from google.genai.errors import APIError
 from dotenv import load_dotenv
 
 # 1. Initialize environments and configurations
@@ -13,7 +14,7 @@ load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
 st.set_page_config(
-    page_title="ViralScan AI - Premium Studio",
+    page_title="ViraLens AI - Premium Studio",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -40,17 +41,20 @@ st.markdown("""
         color: #ffffff !important;
     }
     
-    /* Custom High-Fidelity Premium Metric Cards with Sparklines */
-    .metric-container {
+    /* Unified Card-in-Card Graphical Metrics Layout */
+    .metric-card {
         background: linear-gradient(135deg, #0f0f1a 0%, #141424 100%);
         border: 1px solid #2e2a4f;
         border-radius: 16px;
-        padding: 20px 20px 10px 20px;
+        padding: 20px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         transition: transform 0.3s ease, border-color 0.3s ease;
-        margin-bottom: -10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 190px;
     }
-    .metric-container:hover {
+    .metric-card:hover {
         border-color: #7c3aed;
         transform: translateY(-2px);
     }
@@ -60,27 +64,56 @@ st.markdown("""
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        margin-bottom: 6px;
     }
     .metric-value {
         color: #ffffff;
         font-size: 32px;
         font-weight: 800;
-        line-height: 1;
-        margin-bottom: 4px;
+        line-height: 1.1;
+        margin-top: 4px;
     }
-    .metric-delta-pos {
-        color: #10b981;
+    .metric-delta {
         font-size: 12px;
         font-weight: 600;
+        margin-top: 2px;
     }
-    .metric-delta-neutral {
-        color: #a78bfa;
-        font-size: 12px;
-        font-weight: 600;
+    .sparkline-wrapper {
+        margin-top: auto;
+        padding-top: 10px;
     }
     
-    /* Custom Premium Buttons */
+    /* Premium Sidebar Card Navigation System */
+    div[data-testid="stSidebarUserContent"] .stRadio div[role="radiogroup"] {
+        gap: 12px !important;
+    }
+    div[data-testid="stSidebarUserContent"] .stRadio [data-testid="stWidgetLabel"] {
+        display: none !important;
+    }
+    div[data-testid="stSidebarUserContent"] .stRadio label {
+        background: #11111f !important;
+        border: 1px solid #1e1b4b !important;
+        border-radius: 12px !important;
+        padding: 14px 20px !important;
+        transition: all 0.25s ease-in-out !important;
+        width: 100% !important;
+    }
+    div[data-testid="stSidebarUserContent"] .stRadio label:hover {
+        border-color: #4c1d95 !important;
+        background: #161129 !important;
+        transform: translateX(2px);
+    }
+    div[data-testid="stSidebarUserContent"] .stRadio label[data-checked="true"] {
+        background: linear-gradient(90deg, #1e113a 0%, #120e24 100%) !important;
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 15px rgba(124, 58, 237, 0.15);
+    }
+    div[data-testid="stSidebarUserContent"] .stRadio label div[data-testid="stMarkdownContainer"] p {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }
+    
+    /* Custom Premium Action Buttons */
     .stButton>button {
         background: linear-gradient(90deg, #6d28d9 0%, #4c1d95 100%) !important;
         color: #ffffff !important;
@@ -94,33 +127,28 @@ st.markdown("""
     .stButton>button:hover {
         background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%) !important;
         box-shadow: 0 0 20px rgba(124, 58, 237, 0.6) !important;
-        transform: scale(1.02);
+        transform: scale(1.01);
     }
     
-    /* Input Field Styling */
+    /* Inputs & Layout Structure Cleanups */
     div[data-baseweb="input"], div[data-baseweb="textarea"] {
         background-color: #11111f !important;
         border: 1px solid #2e2a4f !important;
         border-radius: 8px !important;
     }
-    
-    /* Clean Divider borders */
-    hr {
-        border-color: #1e1b4b !important;
-    }
+    hr { border-color: #1e1b4b !important; }
     </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# SIDEBAR SYSTEM INTERFACE
+# SIDEBAR PLATFORM CONFIGURATION
 # ==========================================
-st.sidebar.markdown("<h2 style='color: #a78bfa; margin-bottom: 5px;'>🔮 ViralScan AI</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<h2 style='color: #a78bfa; margin-bottom: 5px; letter-spacing:-0.03em;'>🔮 ViraLens AI</h2>", unsafe_allow_html=True)
 st.sidebar.markdown("<span style='background-color: #2e1065; color: #c084fc; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;'>PRO WORKSPACE</span>", unsafe_allow_html=True)
-st.sidebar.markdown("<div style='margin-bottom: 20px;'></div>", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
 
-# Account configurations completely dropped from navigation
 navigation = st.sidebar.radio(
-    "NAVIGATION HUB",
+    "MENU_HUB",
     ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing"]
 )
 
@@ -129,36 +157,18 @@ st.sidebar.divider()
 st.sidebar.markdown("⚡ **Account Status:** `Creator Level Tier`")
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
-# ==========================================
-# PREMIUM CARD SPARKLINE GRAPH ENGINE
-# ==========================================
-def render_graphical_card(title, value, delta, spark_trend, color_hex, is_neutral=False):
-    # Render text layout
-    delta_class = "metric-delta-neutral" if is_neutral else "metric-delta-pos"
-    st.markdown(f"""
-        <div class="metric-container">
-            <div class="metric-title">{title}</div>
-            <div class="metric-value">{value}</div>
-            <div class="{delta_class}">{delta}</div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # Generate integrated miniature sparkline graph directly under metrics
-    fig = go.Figure(go.Scatter(y=spark_trend, mode='lines', line=dict(color=color_hex, width=2.5)))
+# Helper engine to build clean sparklines nested inside containers
+def draw_sparkline(trend_data, line_color):
+    fig = go.Figure(go.Scatter(y=trend_data, mode='lines', line=dict(color=line_color, width=2.5)))
     fig.update_layout(
-        hovermode=False,
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=5, r=5, t=2, b=2),
-        height=45,
-        showlegend=False
+        hovermode=False, xaxis=dict(visible=False), yaxis=dict(visible=False),
+        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=0, r=0, t=0, b=0), height=45, showlegend=False
     )
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    return fig
 
 # ==========================================
-# 1. LIVE PERFORMANCE DASHBOARD
+# 1. PLATFORM INTERACTIVE DASHBOARD
 # ==========================================
 if navigation == "📊 Dashboard Overview":
     h_col1, h_col2 = st.columns([3, 1])
@@ -168,31 +178,47 @@ if navigation == "📊 Dashboard Overview":
     with h_col2:
         st.write("")
         if st.button("＋ Analyze New Asset", use_container_width=True):
-            st.info("Switching engine lanes... Click on 'Analyze Video Engine' in the left menu bar!")
+            st.info("Redirecting... Click on 'Analyze Video Engine' on the sidebar block menu.")
 
     st.divider()
 
-    # Premium Graphical Cards Row with unique trends matching your exact layout styles
+    # Integrated Graphical Metric Cards Rows
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        render_graphical_card("Videos Analyzed", "124", "▲ +18% from last month", [100, 105, 102, 110, 115, 112, 124], "#3b82f6")
+        st.markdown("""<div class='metric-card'><div class='metric-info'><div class='metric-title'>Videos Analyzed</div>
+                    <div class='metric-value'>124</div><div class='metric-delta' style='color:#10b981;'>▲ +18% from last month</div></div>
+                    <div class='sparkline-wrapper'>""", unsafe_allow_html=True)
+        st.plotly_chart(draw_sparkline([100, 105, 102, 110, 115, 112, 124], "#3b82f6"), use_container_width=True, config={'displayModeBar': False})
+        st.markdown("</div></div>", unsafe_allow_html=True)
+        
     with c2:
-        render_graphical_card("Average Score", "72 / 100", "▲ +6% from last month", [65, 68, 67, 70, 69, 74, 72], "#a78bfa")
+        st.markdown("""<div class='metric-card'><div class='metric-info'><div class='metric-title'>Average Score</div>
+                    <div class='metric-value'>72 / 100</div><div class='metric-delta' style='color:#10b981;'>▲ +6% from last month</div></div>
+                    <div class='sparkline-wrapper'>""", unsafe_allow_html=True)
+        st.plotly_chart(draw_sparkline([65, 68, 67, 70, 69, 74, 72], "#a78bfa"), use_container_width=True, config={'displayModeBar': False})
+        st.markdown("</div></div>", unsafe_allow_html=True)
+        
     with c3:
-        render_graphical_card("Best Performing", "91 / 100", "🏆 Cable Bill Hack.mp4", [80, 82, 85, 84, 89, 88, 91], "#f59e0b", is_neutral=True)
+        st.markdown("""<div class='metric-card'><div class='metric-info'><div class='metric-title'>Best Performing</div>
+                    <div class='metric-value'>91 / 100</div><div class='metric-delta' style='color:#a78bfa;'>🏆 Cable Bill Hack.mp4</div></div>
+                    <div class='sparkline-wrapper'>""", unsafe_allow_html=True)
+        st.plotly_chart(draw_sparkline([80, 82, 85, 84, 89, 88, 91], "#f59e0b"), use_container_width=True, config={'displayModeBar': False})
+        st.markdown("</div></div>", unsafe_allow_html=True)
+        
     with c4:
-        render_graphical_card("Hook Strength", "78%", "▲ +9% from last month", [70, 72, 71, 75, 73, 76, 78], "#10b981")
+        st.markdown("""<div class='metric-card'><div class='metric-info'><div class='metric-title'>Hook Strength</div>
+                    <div class='metric-value'>78%</div><div class='metric-delta' style='color:#10b981;'>▲ +9% from last month</div></div>
+                    <div class='sparkline-wrapper'>""", unsafe_allow_html=True)
+        st.plotly_chart(draw_sparkline([70, 72, 71, 75, 73, 76, 78], "#10b981"), use_container_width=True, config={'displayModeBar': False})
+        st.markdown("</div></div>", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Main Row split into Interactive Analytics & Recent Video Logs
     chart_col, list_col = st.columns([2.3, 1.7])
-    
     with chart_col:
         st.markdown("### 📈 Audience Retention Patterns")
         st.caption("Cross-platform model trajectory metrics for the last 30 intervals")
         
-        # Build out true mock data lines
         dates = [datetime.today() - timedelta(days=i) for i in range(30)][::-1]
         df = pd.DataFrame({
             "Date": dates,
@@ -207,20 +233,15 @@ if navigation == "📊 Dashboard Overview":
         fig.add_trace(go.Scatter(x=df['Date'], y=df['Retention Rate'], mode='lines', name='Retention Avg', line=dict(color='#10b981', width=2))) 
         
         fig.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#94a3b8'),
-            xaxis=dict(showgrid=False, linecolor='#2e2a4f'),
-            yaxis=dict(gridcolor='#1e1b4b', range=[0, 100], linecolor='#2e2a4f'),
-            margin=dict(l=10, r=10, t=10, b=10),
-            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#94a3b8'),
+            xaxis=dict(showgrid=False, linecolor='#2e2a4f'), yaxis=dict(gridcolor='#1e1b4b', range=[0, 100], linecolor='#2e2a4f'),
+            margin=dict(l=10, r=10, t=10, b=10), legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
         )
         st.plotly_chart(fig, use_container_width=True)
 
     with list_col:
         st.markdown("### 🕒 Real-Time Audit Feed")
         st.caption("Latest short-form items run through the core processor")
-        
         st.markdown("""
         <div style='background: #0f0f1a; border: 1px solid #2e2a4f; border-radius: 12px; padding: 16px;'>
             <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1b4b; padding-bottom: 12px; margin-bottom: 12px;'>
@@ -234,14 +255,6 @@ if navigation == "📊 Dashboard Overview":
             <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1b4b; padding-bottom: 12px; margin-bottom: 12px;'>
                 <div><span style='font-weight:bold; color:#ffffff;'>Easy Phone Trick.mp4</span><br><span style='color:#64748b; font-size:12px;'>May 16 • 0:35 mins</span></div>
                 <div style='background: #065f46; color: #34d399; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px;'>84</div>
-            </div>
-            <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1b4b; padding-bottom: 12px; margin-bottom: 12px;'>
-                <div><span style='font-weight:bold; color:#ffffff;'>Hidden Features.mp4</span><br><span style='color:#64748b; font-size:12px;'>May 15 • 0:42 mins</span></div>
-                <div style='background: #991b1b; color: #fca5a5; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px;'>45</div>
-            </div>
-            <div style='display: flex; justify-content: space-between; align-items: center;'>
-                <div><span style='font-weight:bold; color:#ffffff;'>WiFi Booster Setup.mp4</span><br><span style='color:#64748b; font-size:12px;'>May 14 • 0:51 mins</span></div>
-                <div style='background: #854d0e; color: #fef08a; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px;'>61</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -280,35 +293,57 @@ elif navigation == "🎬 Analyze Video Engine":
             
             if st.button("🚀 Execute Neural Simulation Runtime"):
                 with st.spinner("Processing visual timelines and synchronizing audio tracking matrix..."):
-                    try:
-                        with open(temp_filename, "wb") as f:
-                            f.write(uploaded_file.getbuffer())
-                            
-                        client = genai.Client(api_key=api_key)
-                        uploaded_ai_file = client.files.upload(file=temp_filename)
-                        
-                        while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
-                            time.sleep(2)
-                            uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
-                        
-                        system_prompt = """
-                        You are an expert retention analyst for short form video content. 
-                        Break down the video into sections: Performance Grade, 3-Second Hook Audit, Retention Drop-offs, and High-Impact Fixes. Make recommendations direct, punchy, and highly technical.
-                        """
-                        response = client.models.generate_content(
-                            model="gemini-2.5-flash",
-                            contents=[uploaded_ai_file, system_prompt]
-                        )
-                        st.session_state.dash_report = response.text
+                    
+                    # Resilience Matrix: Automatic 503 Overload Recovery Engine
+                    max_retries = 3
+                    retry_delay = 4
+                    success = False
+                    
+                    for attempt in range(max_retries):
                         try:
-                            client.files.delete(name=uploaded_ai_file.name)
-                        except:
-                            pass
-                    except Exception as error:
-                        st.error(f"System Exception Encountered: {error}")
-                    finally:
-                        if os.path.exists(temp_filename):
-                            os.remove(temp_filename)
+                            with open(temp_filename, "wb") as f:
+                                f.write(uploaded_file.getbuffer())
+                                
+                            client = genai.Client(api_key=api_key)
+                            uploaded_ai_file = client.files.upload(file=temp_filename)
+                            
+                            while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
+                                time.sleep(2)
+                                uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
+                            
+                            system_prompt = """
+                            You are an expert retention analyst for short form video content. 
+                            Break down the video into sections: Performance Grade, 3-Second Hook Audit, Retention Drop-offs, and High-Impact Fixes. Make recommendations direct, punchy, and highly technical.
+                            """
+                            response = client.models.generate_content(
+                                model="gemini-2.5-flash",
+                                contents=[uploaded_ai_file, system_prompt]
+                            )
+                            st.session_state.dash_report = response.text
+                            success = True
+                            try:
+                                client.files.delete(name=uploaded_ai_file.name)
+                            except:
+                                pass
+                            break # Break loop out on successful resolution
+                            
+                        except APIError as e:
+                            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                                if attempt < max_retries - 1:
+                                    st.warning(f"⚠️ Neural Node busy (503). Automatic recovery sequence retry {attempt + 1}/{max_retries} in {retry_delay}s...")
+                                    time.sleep(retry_delay)
+                                    retry_delay *= 2 # Exponential backoff
+                                else:
+                                    st.error("🚨 Cloud Architecture Overloaded. The Gemini node is handling high global volume. Please click run again in a few seconds.")
+                            else:
+                                st.error(f"API Error: {e}")
+                                break
+                        except Exception as error:
+                            st.error(f"System Exception Encountered: {error}")
+                            break
+                        finally:
+                            if os.path.exists(temp_filename):
+                                os.remove(temp_filename)
 
             if "dash_report" in st.session_state:
                 st.divider()
@@ -317,7 +352,7 @@ elif navigation == "🎬 Analyze Video Engine":
                     st.markdown(st.session_state.dash_report)
 
 # ==========================================
-# 3. INTERACTIVE HISTORICAL STORAGE REPOSITORY
+# 3. INTERACTIVE HISTORICAL DATA REPOSITORY
 # ==========================================
 elif navigation == "📁 Saved Video History":
     st.markdown("<h1>📁 Secure Asset Retention Logs</h1>", unsafe_allow_html=True)
@@ -327,10 +362,64 @@ elif navigation == "📁 Saved Video History":
     search_q = st.text_input("🔍 Search Historical Filenames", placeholder="Type a file keyword to filter data...")
     
     history_data = {
-        "Project Filename": ["Cable Bill Hack.mp4", "Stop Wasting Money.mp4", "Easy Phone Trick.mp4", "Hidden Features.mp4", "WiFi Booster Setup.mp4"],
-        "Execution Date": ["2026-06-18", "2026-06-17", "2026-06-16", "2026-06-15", "2026-06-14"],
-        "Duration": ["56s", "48s", "35s", "42s", "51s"],
-        "Retention Index": [91, 67, 84, 45, 61],
-        "Platform Optimized": ["TikTok Pro", "YT Shorts", "Instagram Reels", "TikTok Pro", "YT Shorts"]
+        "Project Filename": ["Cable Bill Hack.mp4", "Stop Wasting Money.mp4", "Easy Phone Trick.mp4"],
+        "Execution Date": ["2026-06-18", "2026-06-17", "2026-06-16"],
+        "Duration": ["56s", "48s", "35s"],
+        "Retention Index": [91, 67, 84],
+        "Platform Optimized": ["TikTok Pro", "YT Shorts", "Instagram Reels"]
     }
     df_history = pd.DataFrame(history_data)
+    
+    if search_q:
+        df_history = df_history[df_history["Project Filename"].str.contains(search_q, case=False)]
+
+    st.dataframe(
+        df_history, use_container_width=True, hide_index=True,
+        column_config={
+            "Retention Index": st.column_config.ProgressColumn("Retention Index", min_value=0, max_value=100, format="%d pts"),
+            "Project Filename": st.column_config.TextColumn("Target File Name"),
+        }
+    )
+
+# ==========================================
+# 4. SUBSCRIPTION PLAN MODES
+# ==========================================
+elif navigation == "💎 Subscriptions & Pricing":
+    st.markdown("<h1>💎 Premium Architecture Tiers</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8;'>Upgrade or scale infrastructure boundaries to suit agency rendering throughput requests.</p>", unsafe_allow_html=True)
+    st.divider()
+
+    pc1, pc2, pc3 = st.columns(3)
+    with pc1:
+        st.markdown("""
+        <div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'>
+            <h3 style='color:#94a3b8;'>Starter Sandbox</h3>
+            <h2 style='font-size:36px; margin: 15px 0;'>$0 <span style='font-size:14px; color:gray;'>/ month</span></h2>
+            <hr style='border-color:#1e1b4b;'>
+            <p style='text-align:left;'>• 5 Basic Scans Monthly<br>• Max file duration 60s<br>• Core Processing Units</p>
+            <div style='margin-top:30px; padding:10px; background:#1e1b4b; border-radius:8px; color:gray; font-size:12px; font-weight:bold;'>INACTIVE IN WORKSPACE</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with pc2:
+        st.markdown("""
+        <div style='background: linear-gradient(145deg, #180f2b 0%, #0f0f1a 100%); border: 2px solid #7c3aed; border-radius:16px; padding:24px; text-align:center; box-shadow: 0 0 25px rgba(124,58,237,0.25);'>
+            <h3 style='color:#a78bfa;'>Creator Studio Pro</h3>
+            <h2 style='font-size:36px; margin: 15px 0; color:#ffffff;'>$49 <span style='font-size:14px; color:#a78bfa;'>/ month</span></h2>
+            <hr style='border-color:#2e2a4f;'>
+            <p style='text-align:left; color:#e2e8f0;'>• Unlimited Video Engine Processing<br>• Max file duration 120s<br>• Priority Neural Grid Queue<br>• Custom Analytics Exports</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.write("")
+        st.button("✨ CURRENT WORKSPACE ACCOUNT TIER", disabled=True, use_container_width=True)
+        
+    with pc3:
+        st.markdown("""
+        <div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'>
+            <h3 style='color:#94a3b8;'>Production Scale</h3>
+            <h2 style='font-size:36px; margin: 15px 0;'>$199 <span style='font-size:14px; color:gray;'>/ month</span></h2>
+            <hr style='border-color:#1e1b4b;'>
+            <p style='text-align:left;'>• Unlimited Scans + Automation APIs<br>• Uncapped File Durations<br>• Dedicated AI Node Cluster access</p>
+            <div style='margin-top:30px;'></div>
+        </div>
+        """, unsafe_allow_html=True)
