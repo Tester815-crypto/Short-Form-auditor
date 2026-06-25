@@ -28,9 +28,15 @@ if uploaded_file is not None:
     duration_seconds = video_analysis.duration
     video_analysis.close() 
     
+    # FORCED RAM CLEANUP: Tell the server to completely dump the moviepy data right now
+    del video_analysis
+    import gc
+    gc.collect()
+    
     if duration_seconds > 120:
         st.error(f"🚨 Video Length Restriction: Your video is {int(duration_seconds)} seconds long. Please keep it under 2 minutes (120 seconds).")
-        os.remove(temp_filename) 
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename) 
     else:
         st.success(f"✅ Video duration verified ({int(duration_seconds)}s). Ready to simulate audience engagement.")
         
@@ -38,6 +44,9 @@ if uploaded_file is not None:
         if st.button("🚀 Run Virality Simulation"):
             with st.spinner("Uploading assets and running frame-by-frame algorithmic check..."):
                 try:
+                    # Keep your existing Gemini API / processing lines here
+                    # e.g., video_asset = genai.upload_file(path=temp_filename)
+                    # e.g., response = model.generate_content(...)
                     # Connect to the official Google SDK client
                     client = genai.Client(api_key=api_key)
                     
