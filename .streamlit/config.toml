@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#00FFCC"          # Cyberpunk neon teal for action buttons/metrics
+backgroundColor = "#0B0F19"       # Deep premium slate/black background
+secondaryBackgroundColor = "#161F30" # Rich dark blue-grey for file upload boxes/cards
+textColor = "#FFFFFF"             # Crisp white text for ultimate readability
+font = "sans serif"
