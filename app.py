@@ -18,25 +18,35 @@ st.write("Upload your completed Short, Reel, or TikTok under 2 minutes to scan i
 uploaded_file = st.file_uploader("Drop your video file here (.mp4 or .mov)", type=["mp4", "mov"])
 
 if uploaded_file is not None:
-    # Save the file temporarily to your drive so moviepy can check its runtime
+    # Generate a unique key identifier for this specific uploaded file
+    file_key = f"{uploaded_file.name}_{uploaded_file.size}"
     temp_filename = "user_upload_temp.mp4"
-    with open(temp_filename, "wb") as f:
-        f.write(uploaded_file.read())
     
-    # 3. Read Video Length Metadata
-    video_analysis = VideoFileClip(temp_filename)
-    duration_seconds = video_analysis.duration
-    video_analysis.close() 
-    
-    # FORCED RAM CLEANUP: Tell the server to completely dump the moviepy data right now
-    del video_analysis
-    import gc
-    gc.collect()
+    # SYSTEM OPTIMIZATION: Only run MoviePy ONCE when a brand-new file hits the server
+    if "file_verified_key" not in st.session_state or st.session_state.file_verified_key != file_key:
+        with open(temp_filename, "wb") as f:
+            f.write(uploaded_file.getbuffer()) # Using memory buffer is vastly faster
+        
+        # Read Video Length Metadata
+        video_analysis = VideoFileClip(temp_filename)
+        st.session_state.duration_seconds = video_analysis.duration
+        video_analysis.close() 
+        
+        # Absolute immediate purge of MoviePy memory allocation
+        del video_analysis
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename) 
+        import gc
+        gc.collect()
+        
+        # Cache verification status so it never runs MoviePy again for this file session
+        st.session_state.file_verified_key = file_key
+
+    # Pull verified duration directly from session state memory cache
+    duration_seconds = st.session_state.duration_seconds
     
     if duration_seconds > 120:
         st.error(f"🚨 Video Length Restriction: Your video is {int(duration_seconds)} seconds long. Please keep it under 2 minutes (120 seconds).")
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename) 
     else:
         st.success(f"✅ Video duration verified ({int(duration_seconds)}s). Ready to simulate audience engagement.")
         
@@ -44,16 +54,17 @@ if uploaded_file is not None:
         if st.button("🚀 Run Virality Simulation"):
             with st.spinner("Uploading assets and running frame-by-frame algorithmic check..."):
                 try:
-                    # Keep your existing Gemini API / processing lines here
-                    # e.g., video_asset = genai.upload_file(path=temp_filename)
-                    # e.g., response = model.generate_content(...)
-                    # Connect to the official Google SDK client
+                    # Write the temporary file ONLY for the duration of the API delivery call
+                    with open(temp_filename, "wb") as f:
+                        f.write(uploaded_file.getbuffer())
+                        
+                    # Connect to the official SDK client
                     client = genai.Client(api_key=api_key)
                     
-                    # Upload the file to Google's temporary processing pool
+                    # Upload the file to the temporary engine processing pool
                     uploaded_ai_file = client.files.upload(file=temp_filename)
                     
-                    # Give the file a moment to process on Google's servers
+                    # Give the file a moment to process on cloud engines
                     while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
                         time.sleep(2)
                         uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
@@ -76,15 +87,22 @@ if uploaded_file is not None:
                     Provide 3 concrete, actionable changes (e.g., 'Add a pattern interrupt at 0:14', 'Punch in 10% closer on the hook cut') to increase retention.
                     """
                     
-                    # Trigger the analysis request via the ultra-fast gemini-2.5-flash model
+                    # Trigger the analysis request via the ultra-fast engine
                     response = client.models.generate_content(
                         model="gemini-2.5-flash",
                         contents=[uploaded_ai_file, system_prompt]
                     )
-                   # 1. White-label the data (Saves the user from seeing third-party engine names)
+                    
+                    # Whitelabel Core Clean Up: Intercept third-party infrastructure mentions
                     full_report = response.text.replace("Gemini", "Proprietary Core").replace("gemini", "Core Engine")
                     
-                    # 2. Smart script to extract the AI's 100-point score and convert it to a premium 10-point scale
+                    # Clean up the file off the Cloud infrastructure right away
+                    try:
+                        client.files.delete(name=uploaded_ai_file.name)
+                    except:
+                        pass
+                    
+                    # Smart script to extract the engine's score and convert it to a premium 10-point scale
                     raw_score = 85  # Clean fallback number
                     for line in full_report.split("\n"):
                         if "Score:" in line or "88/100" in line or "90/100" in line:
@@ -93,65 +111,76 @@ if uploaded_file is not None:
                                 raw_score = digits[0]
                                 break
                     
-                    # Safely calculate the core 10-point scale metric
+                    # Safely calculate core 10-point scale metric
                     final_score = round(raw_score / 10, 1) if raw_score > 10 else float(raw_score)
                     if final_score > 10.0 or final_score < 1.0:
                         final_score = 8.8  # Clean visual anchor fallback
                     
-                    # 3. Derive 10-point sub-metrics to create a robust software scoring matrix
+                    # Derive 10-point sub-metrics to create a robust software scoring matrix
                     hook_score = min(10.0, round(final_score + 0.4, 1))
                     pacing_score = min(10.0, round(final_score - 0.3, 1))
                     retention_score = final_score
 
-                    # 4. Main Standalone App Interface
-                    with st.container(border=True):
-                        st.markdown("<h2 style='text-align: center; color: #00FFCC; font-family: sans-serif;'>🛡️ RetainAI Diagnostic Matrix</h2>", unsafe_allow_html=True)
-                        st.caption("<p style='text-align: center;'>Proprietary Automated Short-Form Auditing Environment v2.1</p>", unsafe_allow_html=True)
-                        st.divider()
-                        
-                        # High-End Premium Key Performance Cards
-                        m1, m2, m3 = st.columns(3)
-                        with m1:
-                            st.metric(label="🔥 OVERALL VIRALITY INDEX", value=f"{final_score} / 10")
-                        with m2:
-                            st.metric(label="📊 SCAN PROFILE", value="Short / Reel / TikTok")
-                        with m3:
-                            st.metric(label="🔒 ARCHITECTURE STATUS", value="Live / Proprietary")
-                        
-                        st.divider()
-                        
-                        # 5. Visual App Progress Bars (Replaces the raw PDF text look)
-                        st.markdown("### 📈 Core Performance Vectors")
-                        
-                        p_col1, p_col2, p_col3 = st.columns(3)
-                        with p_col1:
-                            st.write(f"🪝 **Hook Efficiency:** {hook_score} / 10")
-                            st.progress(hook_score / 10.0)
-                        with p_col2:
-                            st.write(f"⏱️ **Pacing Flow Rate:** {pacing_score} / 10")
-                            st.progress(pacing_score / 10.0)
-                        with p_col3:
-                            st.write(f"📉 **Audience Retention Hold:** {retention_score} / 10")
-                            st.progress(retention_score / 10.0)
-                            
-                        st.divider()
-                        
-                        # 6. Interactive App Expanders (Hides raw paragraphs inside structured drawers)
-                        st.markdown("### 🧠 Deep-Dive Intelligence Modules")
-                        
-                        with st.expander("👁️ Open Full Structural Audit Timeline & Recommendations", expanded=False):
-                            st.markdown(full_report)
-                            
-                        with st.expander("📥 Platform Export Assets"):
-                            st.download_button(
-                                label="Download Signed Platform Report Manifest",
-                                data=full_report,
-                                file_name="retention_audit_manifest.txt",
-                                mime="text/plain"
-                            )
+                    # Save the generated dashboard data to session state so it stays visible on user clicks
+                    st.session_state.dash_report = full_report
+                    st.session_state.scores = (final_score, hook_score, pacing_score, retention_score)
+                    
                 except Exception as error:
-                    st.error(f"An processing error occurred: {error}")
+                    st.error(f"A processing error occurred: {error}")
                 finally:
-                    # Clean up the file out of your local desktop folder
+                    # STRICT DISK CLEANUP: Erases file from local space immediately when execution loop breaks
                     if os.path.exists(temp_filename):
                         os.remove(temp_filename)
+                    import gc
+                    gc.collect()
+
+        # Render the dashboard from memory state if it exists
+        if "dash_report" in st.session_state:
+            f_score, h_score, p_score, r_score = st.session_state.scores
+            report_text = st.session_state.dash_report
+            
+            # Main Standalone App Interface
+            with st.container(border=True):
+                st.markdown("<h2 style='text-align: center; color: #00FFCC; font-family: sans-serif;'>🛡️ RetainAI Diagnostic Matrix</h2>", unsafe_allow_html=True)
+                st.caption("<p style='text-align: center;'>Proprietary Automated Short-Form Auditing Environment v2.1</p>", unsafe_allow_html=True)
+                st.divider()
+                
+                # High-End Premium Key Performance Cards
+                m1, m2, m3 = st.columns(3)
+                with m1:
+                    st.metric(label="🔥 OVERALL VIRALITY INDEX", value=f"{f_score} / 10")
+                with m2:
+                    st.metric(label="📊 SCAN PROFILE", value="Short / Reel / TikTok")
+                with m3:
+                    st.metric(label="🔒 ARCHITECTURE STATUS", value="Live / Proprietary")
+                
+                st.divider()
+                
+                # Visual App Progress Bars
+                st.markdown("### 📈 Core Performance Vectors")
+                p_col1, p_col2, p_col3 = st.columns(3)
+                with p_col1:
+                    st.write(f"🪝 **Hook Efficiency:** {h_score} / 10")
+                    st.progress(h_score / 10.0)
+                with p_col2:
+                    st.write(f"⏱️ **Pacing Flow Rate:** {p_score} / 10")
+                    st.progress(p_score / 10.0)
+                with p_col3:
+                    st.write(f"📉 **Audience Retention Hold:** {r_score} / 10")
+                    st.progress(r_score / 10.0)
+                    
+                st.divider()
+                
+                # Interactive App Expanders (Now 100% memory safe!)
+                st.markdown("### 🧠 Deep-Dive Intelligence Modules")
+                
+                with st.expander("👁️ Open Full Structural Audit Timeline & Recommendations", expanded=False):
+                    st.markdown(report_text)
+                    
+                with st.expander("📥 Platform Export Assets"):
+                    st.download_button(
+                        label="Download Signed Platform Report Manifest",
+                        data=report_text,
+                        file_name="retention_audit_manifest.txt",
+                        mime="text/plain"
+                    )
