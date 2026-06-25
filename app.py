@@ -1,7 +1,10 @@
 import streamlit as st
 import os
 import time
+import base64
+import io
 import pandas as pd
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from moviepy import VideoFileClip
@@ -9,7 +12,7 @@ from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
 
-# 1. Initialize environments and configurations
+# Initialize environments and configurations
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
@@ -41,33 +44,34 @@ st.markdown("""
         color: #ffffff !important;
     }
     
-    /* Unified Card-in-Card Graphical Metrics Layout */
-    .metric-card {
+    /* Absolute Integrated High-Fidelity Premium Metric Card */
+    .metric-card-wrapper {
         background: linear-gradient(135deg, #0f0f1a 0%, #141424 100%);
         border: 1px solid #2e2a4f;
         border-radius: 16px;
-        padding: 20px;
+        padding: 22px 20px 16px 20px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         transition: transform 0.3s ease, border-color 0.3s ease;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 190px;
+        height: 185px;
+        box-sizing: border-box;
     }
-    .metric-card:hover {
+    .metric-card-wrapper:hover {
         border-color: #7c3aed;
         transform: translateY(-2px);
     }
     .metric-title {
         color: #94a3b8;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
     .metric-value {
         color: #ffffff;
-        font-size: 32px;
+        font-size: 30px;
         font-weight: 800;
         line-height: 1.1;
         margin-top: 4px;
@@ -77,9 +81,11 @@ st.markdown("""
         font-weight: 600;
         margin-top: 2px;
     }
-    .sparkline-wrapper {
+    .sparkline-img {
+        width: 100%;
+        height: 45px;
         margin-top: auto;
-        padding-top: 10px;
+        object-fit: contain;
     }
     
     /* Premium Sidebar Card Navigation System */
@@ -93,27 +99,30 @@ st.markdown("""
         background: #11111f !important;
         border: 1px solid #1e1b4b !important;
         border-radius: 12px !important;
-        padding: 14px 20px !important;
+        padding: 16px 20px !important;
         transition: all 0.25s ease-in-out !important;
         width: 100% !important;
+        display: block !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
     div[data-testid="stSidebarUserContent"] .stRadio label:hover {
         border-color: #4c1d95 !important;
         background: #161129 !important;
-        transform: translateX(2px);
+        transform: translateX(3px);
     }
     div[data-testid="stSidebarUserContent"] .stRadio label[data-checked="true"] {
         background: linear-gradient(90deg, #1e113a 0%, #120e24 100%) !important;
         border-color: #7c3aed !important;
-        box-shadow: 0 0 15px rgba(124, 58, 237, 0.15);
+        box-shadow: 0 0 15px rgba(124, 58, 237, 0.2);
     }
     div[data-testid="stSidebarUserContent"] .stRadio label div[data-testid="stMarkdownContainer"] p {
         color: #ffffff !important;
         font-weight: 600 !important;
         font-size: 14px !important;
+        margin: 0 !important;
     }
     
-    /* Custom Premium Action Buttons */
+    /* Premium Action Buttons */
     .stButton>button {
         background: linear-gradient(90deg, #6d28d9 0%, #4c1d95 100%) !important;
         color: #ffffff !important;
@@ -130,7 +139,7 @@ st.markdown("""
         transform: scale(1.01);
     }
     
-    /* Inputs & Layout Structure Cleanups */
+    /* Inputs Configuration Details */
     div[data-baseweb="input"], div[data-baseweb="textarea"] {
         background-color: #11111f !important;
         border: 1px solid #2e2a4f !important;
@@ -157,15 +166,33 @@ st.sidebar.divider()
 st.sidebar.markdown("⚡ **Account Status:** `Creator Level Tier`")
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
-# Helper engine to build clean sparklines nested inside containers
-def draw_sparkline(trend_data, line_color):
-    fig = go.Figure(go.Scatter(y=trend_data, mode='lines', line=dict(color=line_color, width=2.5)))
-    fig.update_layout(
-        hovermode=False, xaxis=dict(visible=False), yaxis=dict(visible=False),
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=0, r=0, t=0, b=0), height=45, showlegend=False
-    )
-    return fig
+# Engine to render image streams inside custom cards
+def get_sparkline_base64(trend_data, color_hex):
+    fig, ax = plt.subplots(figsize=(3, 0.55), dpi=100)
+    ax.plot(trend_data, color=color_hex, linewidth=2.5)
+    ax.axis('off')
+    fig.patch.set_facecolor('none')
+    ax.set_facecolor('none')
+    plt.tight_layout(pad=0)
+    
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', facecolor=fig.get_facecolor(), edgecolor='none', bbox_inches='tight')
+    plt.close(fig)
+    return base64.b64encode(buf.getvalue()).decode('utf-8')
+
+def build_graphical_card(title, value, delta, delta_color, trend_data, line_color):
+    img_b64 = get_sparkline_base64(trend_data, line_color)
+    card_html = f"""
+    <div class="metric-card-wrapper">
+        <div>
+            <div class="metric-title">{title}</div>
+            <div class="metric-value">{value}</div>
+            <div class="metric-delta" style="color: {delta_color};">{delta}</div>
+        </div>
+        <img class="sparkline-img" src="data:image/png;base64,{img_b64}" />
+    </div>
+    """
+    return card_html
 
 # ==========================================
 # 1. PLATFORM INTERACTIVE DASHBOARD
@@ -182,35 +209,16 @@ if navigation == "📊 Dashboard Overview":
 
     st.divider()
 
-    # Integrated Graphical Metric Cards Rows
+    # Cards Row with sparklines properly integrated
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.markdown("""<div class='metric-card'><div class='metric-info'><div class='metric-title'>Videos Analyzed</div>
-                    <div class='metric-value'>124</div><div class='metric-delta' style='color:#10b981;'>▲ +18% from last month</div></div>
-                    <div class='sparkline-wrapper'>""", unsafe_allow_html=True)
-        st.plotly_chart(draw_sparkline([100, 105, 102, 110, 115, 112, 124], "#3b82f6"), use_container_width=True, config={'displayModeBar': False})
-        st.markdown("</div></div>", unsafe_allow_html=True)
-        
+        st.markdown(build_graphical_card("Videos Analyzed", "124", "▲ +18% from last month", "#10b981", [100, 105, 102, 110, 115, 112, 124], "#3b82f6"), unsafe_allow_html=True)
     with c2:
-        st.markdown("""<div class='metric-card'><div class='metric-info'><div class='metric-title'>Average Score</div>
-                    <div class='metric-value'>72 / 100</div><div class='metric-delta' style='color:#10b981;'>▲ +6% from last month</div></div>
-                    <div class='sparkline-wrapper'>""", unsafe_allow_html=True)
-        st.plotly_chart(draw_sparkline([65, 68, 67, 70, 69, 74, 72], "#a78bfa"), use_container_width=True, config={'displayModeBar': False})
-        st.markdown("</div></div>", unsafe_allow_html=True)
-        
+        st.markdown(build_graphical_card("Average Score", "72 / 100", "▲ +6% from last month", "#10b981", [65, 68, 67, 70, 69, 74, 72], "#a78bfa"), unsafe_allow_html=True)
     with c3:
-        st.markdown("""<div class='metric-card'><div class='metric-info'><div class='metric-title'>Best Performing</div>
-                    <div class='metric-value'>91 / 100</div><div class='metric-delta' style='color:#a78bfa;'>🏆 Cable Bill Hack.mp4</div></div>
-                    <div class='sparkline-wrapper'>""", unsafe_allow_html=True)
-        st.plotly_chart(draw_sparkline([80, 82, 85, 84, 89, 88, 91], "#f59e0b"), use_container_width=True, config={'displayModeBar': False})
-        st.markdown("</div></div>", unsafe_allow_html=True)
-        
+        st.markdown(build_graphical_card("Best Performing", "91 / 100", "🏆 Cable Bill Hack.mp4", "#a78bfa", [80, 82, 85, 84, 89, 88, 91], "#f59e0b"), unsafe_allow_html=True)
     with c4:
-        st.markdown("""<div class='metric-card'><div class='metric-info'><div class='metric-title'>Hook Strength</div>
-                    <div class='metric-value'>78%</div><div class='metric-delta' style='color:#10b981;'>▲ +9% from last month</div></div>
-                    <div class='sparkline-wrapper'>""", unsafe_allow_html=True)
-        st.plotly_chart(draw_sparkline([70, 72, 71, 75, 73, 76, 78], "#10b981"), use_container_width=True, config={'displayModeBar': False})
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        st.markdown(build_graphical_card("Hook Strength", "78%", "▲ +9% from last month", "#10b981", [70, 72, 71, 75, 73, 76, 78], "#10b981"), unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -293,11 +301,8 @@ elif navigation == "🎬 Analyze Video Engine":
             
             if st.button("🚀 Execute Neural Simulation Runtime"):
                 with st.spinner("Processing visual timelines and synchronizing audio tracking matrix..."):
-                    
-                    # Resilience Matrix: Automatic 503 Overload Recovery Engine
                     max_retries = 3
                     retry_delay = 4
-                    success = False
                     
                     for attempt in range(max_retries):
                         try:
@@ -320,21 +325,20 @@ elif navigation == "🎬 Analyze Video Engine":
                                 contents=[uploaded_ai_file, system_prompt]
                             )
                             st.session_state.dash_report = response.text
-                            success = True
                             try:
                                 client.files.delete(name=uploaded_ai_file.name)
                             except:
                                 pass
-                            break # Break loop out on successful resolution
+                            break
                             
                         except APIError as e:
                             if "503" in str(e) or "UNAVAILABLE" in str(e):
                                 if attempt < max_retries - 1:
-                                    st.warning(f"⚠️ Neural Node busy (503). Automatic recovery sequence retry {attempt + 1}/{max_retries} in {retry_delay}s...")
+                                    st.warning(f"⚠️ Neural Node busy (503). Retrying in {retry_delay}s...")
                                     time.sleep(retry_delay)
-                                    retry_delay *= 2 # Exponential backoff
+                                    retry_delay *= 2
                                 else:
-                                    st.error("🚨 Cloud Architecture Overloaded. The Gemini node is handling high global volume. Please click run again in a few seconds.")
+                                    st.error("🚨 Cloud Architecture Overloaded. Please try re-running the simulation shortly.")
                             else:
                                 st.error(f"API Error: {e}")
                                 break
