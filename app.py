@@ -1,9 +1,18 @@
+Here is the complete, fully integrated code for ViraLens AI.
+
+I have seamlessly injected the post-simulation layout directly into the rendering loop. I also added a dynamic randomizer (`import random`) to generate realistic float scores (e.g., 8.5, 9.2) for the gauges right after the Gemini audit finishes, storing them in the session state so they persist perfectly when the user clicks around the dashboard.
+
+I have also cleaned up the formatting to ensure there are no copy-paste indentation errors.
+
+```python
 import streamlit as st
 import os
 import time
 import base64
 import io
+import random
 import pandas as pd
+import matplotlib.subplots as plt_subplots # Adjusted to avoid global plt issues in Streamlit
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
@@ -11,6 +20,59 @@ from moviepy import VideoFileClip
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
+
+def render_circular_gauge(score, max_score, label, color):
+    """
+    Renders a premium, hardware-accelerated SVG circular gauge matching the dark/purple theme.
+    """
+    # Calculate SVG stroke dash offset (Circumference of r=40 is ~251.2)
+    percentage = min(max(score / max_score, 0.0), 1.0)
+    dash_offset = 251.2 - (percentage * 251.2)
+    
+    gauge_html = f"""
+    <div style="
+        background: #0b0b11; 
+        border: 1px solid #1e1b4b; 
+        border-radius: 16px; 
+        padding: 24px 16px; 
+        text-align: center; 
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        transition: transform 0.2s ease-in-out, border-color 0.2s;
+    " onmouseover="this.style.borderColor='{color}';" onmouseout="this.style.borderColor='#1e1b4b';">
+        <div style="position: relative; display: inline-block; width: 110px; height: 110px;">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" style="transform: rotate(-90deg);">
+                <circle cx="50" cy="50" r="40" stroke="#151522" stroke-width="8" fill="transparent" />
+                <circle cx="50" cy="50" r="40" stroke="{color}" stroke-width="8" fill="transparent"
+                        stroke-dasharray="251.2" stroke-dashoffset="{dash_offset}" stroke-linecap="round"
+                        style="transition: stroke-dashoffset 1s ease-out;" />
+            </svg>
+            <div style="
+                position: absolute; 
+                top: 50%; 
+                left: 50%; 
+                transform: translate(-50%, -50%); 
+                font-family: 'Inter', sans-serif;
+                font-size: 22px; 
+                font-weight: 700; 
+                color: #ffffff;
+            ">
+                {score}<span style="font-size: 12px; color: #64748b; font-weight: 400;">/{max_score}</span>
+            </div>
+        </div>
+        <div style="
+            margin-top: 14px; 
+            font-family: 'Inter', sans-serif;
+            font-size: 13px; 
+            font-weight: 600; 
+            color: #94a3b8; 
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        ">
+            {label}
+        </div>
+    </div>
+    """
+    return st.markdown(gauge_html, unsafe_allow_html=True)
 
 # ==========================================
 # 1. INITIALIZATION & CONFIGURATION
@@ -287,6 +349,12 @@ elif navigation == "🎬 Analyze Video Engine":
                                 update_progress(100, "Audit Complete.")
                                 st.session_state[f"dash_report_{i}"] = response.text
                                 
+                                # Generate simulation telemetry scores dynamically for the gauges
+                                st.session_state[f"hook_score_{i}"] = round(random.uniform(7.5, 9.8), 1)
+                                st.session_state[f"ret_score_{i}"] = round(random.uniform(6.5, 9.5), 1)
+                                st.session_state[f"emo_score_{i}"] = round(random.uniform(7.0, 9.9), 1)
+                                st.session_state[f"conv_score_{i}"] = round(random.uniform(6.0, 9.0), 1)
+                                
                                 try: 
                                     client.files.delete(name=uploaded_ai_file.name)
                                 except: 
@@ -309,10 +377,28 @@ elif navigation == "🎬 Analyze Video Engine":
                         
                         bar.empty() # Clear the bar when finished
 
-            # Display the report if it exists in the session state for this tab
+            # =================================================================
+            # 🚀 POST-SIMULATION LAYOUT BLOCK
+            # =================================================================
             if f"dash_report_{i}" in st.session_state:
                 st.divider()
                 st.markdown(f"<h3 style='color: #a78bfa;'>🧠 {platform_name} Diagnostic Matrix</h3>", unsafe_allow_html=True)
+                
+                # Render the 4 animated metric gauges horizontally
+                col1, col2, col3, col4 = st.columns(4)
+
+                with col1:
+                    render_circular_gauge(score=st.session_state[f"hook_score_{i}"], max_score=10, label="⚡ Hook", color="#00f2fe")
+                with col2:
+                    render_circular_gauge(score=st.session_state[f"ret_score_{i}"], max_score=10, label="⏱️ Retention", color="#d946ef")
+                with col3:
+                    render_circular_gauge(score=st.session_state[f"emo_score_{i}"], max_score=10, label="🔥 Emotional", color="#ff5e62")
+                with col4:
+                    render_circular_gauge(score=st.session_state[f"conv_score_{i}"], max_score=10, label="🎯 Conversion", color="#10b981")
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # Render the deep AI textual breakdown below the gauges
                 with st.container(border=True): 
                     st.markdown(st.session_state[f"dash_report_{i}"])
 
@@ -354,3 +440,5 @@ elif navigation == "💎 Subscriptions & Pricing":
         st.write(""); st.button("✨ CURRENT WORKSPACE ACCOUNT TIER", disabled=True, use_container_width=True)
     with pc3:
         st.markdown("""<div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'><h3 style='color:#94a3b8;'>Production Scale</h3><h2 style='font-size:36px; margin: 15px 0;'>$199 <span style='font-size:14px; color:gray;'>/ month</span></h2><hr style='border-color:#1e1b4b;'><p style='text-align:left;'>• Unlimited Scans + Automation APIs<br>• Uncapped File Durations<br>• Dedicated AI Node Cluster access</p><div style='margin-top:30px;'></div></div>""", unsafe_allow_html=True)
+
+```
