@@ -11,6 +11,7 @@ from moviepy import VideoFileClip
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
+from streamlit_circular_progress import CircularProgress
 
 # ==========================================
 # 1. INITIALIZATION & CONFIGURATION
