@@ -25,23 +25,55 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- CSS STYLES ---
+# --- CSS STYLES (Restored & Upgraded Liveliness) ---
 st.markdown("""
     <style>
-    h1, h2, h3, h4, h5, h6 { font-family: 'Inter', sans-serif !important; font-weight: 700 !important; color: #ffffff !important; }
+    h1, h2, h3, h4, h5, h6 { 
+        font-family: 'Inter', sans-serif !important; 
+        font-weight: 700 !important; 
+        color: #ffffff !important; 
+    }
+    
+    /* Glowing & Animated Metric Cards */
     .metric-card-wrapper {
-        background: linear-gradient(135deg, #0f0f1a 0%, #141424 100%);
-        border: 1px solid #2e2a4f;
+        background: linear-gradient(135deg, rgba(15, 15, 26, 0.8) 0%, rgba(20, 20, 36, 0.9) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(124, 58, 237, 0.3);
         border-radius: 16px;
         padding: 22px 20px 16px 20px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(124, 58, 237, 0.05);
         height: 185px;
         box-sizing: border-box;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .metric-title { color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; }
-    .metric-value { color: #ffffff; font-size: 30px; font-weight: 800; }
-    .sparkline-img { width: 100%; height: 45px; margin-top: auto; }
-    .stButton>button { background: linear-gradient(90deg, #6d28d9 0%, #4c1d95 100%) !important; color: white !important; border-radius: 10px !important; }
+    .metric-card-wrapper:hover {
+        transform: translateY(-6px);
+        border-color: rgba(124, 58, 237, 0.8);
+        box-shadow: 0 15px 40px rgba(124, 58, 237, 0.25), inset 0 0 30px rgba(124, 58, 237, 0.1);
+    }
+    
+    .metric-title { color: #a78bfa; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;}
+    .metric-value { color: #ffffff; font-size: 32px; font-weight: 800; text-shadow: 0 0 15px rgba(255,255,255,0.2); }
+    .metric-delta { font-weight: 600; font-size: 13px; margin-top: 4px; }
+    .sparkline-img { width: 100%; height: 45px; margin-top: auto; opacity: 0.9; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5)); transition: opacity 0.3s; }
+    .metric-card-wrapper:hover .sparkline-img { opacity: 1; filter: drop-shadow(0px 6px 8px rgba(124, 58, 237, 0.4)); }
+    
+    /* Vibrant Buttons */
+    .stButton>button { 
+        background: linear-gradient(90deg, #6d28d9 0%, #4c1d95 100%) !important; 
+        color: white !important; 
+        border-radius: 12px !important; 
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        box-shadow: 0 4px 15px rgba(109, 40, 217, 0.4) !important;
+        transition: all 0.3s ease !important;
+        font-weight: 600 !important;
+    }
+    .stButton>button:hover {
+        background: linear-gradient(90deg, #7c3aed 0%, #5b21b6 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 25px rgba(109, 40, 217, 0.6) !important;
+        border: 1px solid rgba(255,255,255,0.3) !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -49,22 +81,44 @@ st.markdown("""
 # ==========================================
 # 2. HELPER UI & GRAPHICS ENGINES
 # ==========================================
-def render_circular_gauge(score, max_score, label, color):
+def render_circular_gauge(score, max_score, label, color_start, color_end, shadow_rgba):
     percentage = min(max(score / max_score, 0.0), 1.0)
     dash_offset = 251.2 - (percentage * 251.2)
+    grad_id = f"grad_{label.replace(' ', '')}"
+    glow_id = f"glow_{label.replace(' ', '')}"
+    
+    # Premium SVG Gauge with Gradients, Glow Filters, and Hover Animation
     gauge_html = f"""
-    <div style="background: #0b0b11; border: 1px solid #1e1b4b; border-radius: 16px; padding: 24px 16px; text-align: center;">
-        <div style="position: relative; display: inline-block; width: 110px; height: 110px;">
-            <svg width="100%" height="100%" viewBox="0 0 100 100" style="transform: rotate(-90deg);">
-                <circle cx="50" cy="50" r="40" stroke="#151522" stroke-width="8" fill="transparent" />
-                <circle cx="50" cy="50" r="40" stroke="{color}" stroke-width="8" fill="transparent"
-                        stroke-dasharray="251.2" stroke-dashoffset="{dash_offset}" stroke-linecap="round" />
+    <div style="background: linear-gradient(145deg, rgba(17, 17, 26, 0.9) 0%, rgba(11, 11, 17, 0.95) 100%); 
+                border: 1px solid #2e2a4f; border-radius: 20px; padding: 28px 16px; text-align: center; 
+                box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05); 
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" 
+         onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='{color_start}'; this.style.boxShadow='0 15px 35px {shadow_rgba}'" 
+         onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='#2e2a4f'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.6)'">
+         
+        <div style="position: relative; display: inline-block; width: 130px; height: 130px;">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" style="transform: rotate(-90deg); overflow: visible;">
+                <defs>
+                    <linearGradient id="{grad_id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="{color_start}" />
+                        <stop offset="100%" stop-color="{color_end}" />
+                    </linearGradient>
+                    <filter id="{glow_id}" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="4" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </filter>
+                </defs>
+                <!-- Track -->
+                <circle cx="50" cy="50" r="40" stroke="#1a1a2e" stroke-width="8" fill="transparent" />
+                <!-- Glowing Progress Ring -->
+                <circle cx="50" cy="50" r="40" stroke="url(#{grad_id})" stroke-width="8" fill="transparent"
+                        stroke-dasharray="251.2" stroke-dashoffset="{dash_offset}" stroke-linecap="round" filter="url(#{glow_id})" />
             </svg>
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ffffff; font-weight: 700;">
-                {score}<span style="font-size: 12px; color: #64748b;">/{max_score}</span>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ffffff; font-weight: 800; font-size: 28px; text-shadow: 0 0 15px {shadow_rgba};">
+                {score}<span style="font-size: 14px; color: #94a3b8; font-weight: 600;">/{max_score}</span>
             </div>
         </div>
-        <div style="margin-top: 14px; font-size: 13px; color: #94a3b8; text-transform: uppercase;">{label}</div>
+        <div style="margin-top: 18px; font-size: 14px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,255,255,0.1);">{label}</div>
     </div>
     """
     return st.markdown(gauge_html, unsafe_allow_html=True)
@@ -72,7 +126,9 @@ def render_circular_gauge(score, max_score, label, color):
 
 def get_sparkline_base64(trend_data, color_hex):
     fig, ax = plt.subplots(figsize=(3, 0.55), dpi=100)
-    ax.plot(trend_data, color=color_hex, linewidth=2.5)
+    ax.plot(trend_data, color=color_hex, linewidth=3)
+    # Add a soft fill under the sparkline for extra premium feel
+    ax.fill_between(range(len(trend_data)), trend_data, alpha=0.15, color=color_hex)
     ax.axis('off')
     fig.patch.set_facecolor('none')
     ax.set_facecolor('none')
@@ -100,11 +156,11 @@ def build_graphical_card(title, value, delta, delta_color, trend_data, line_colo
 # ==========================================
 # 3. SIDEBAR PLATFORM CONFIGURATION
 # ==========================================
-st.sidebar.markdown("<h2 style='color: #a78bfa; margin-bottom: 5px; letter-spacing:-0.03em;'>🔮 ViraLens AI</h2>", unsafe_allow_html=True)
-st.sidebar.markdown("<span style='background-color: #2e1065; color: #c084fc; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;'>PRO WORKSPACE</span>", unsafe_allow_html=True)
+st.sidebar.markdown("<h2 style='color: #c084fc; margin-bottom: 5px; letter-spacing:-0.03em; text-shadow: 0 0 15px rgba(192, 132, 252, 0.4);'>🔮 ViraLens AI</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<span style='background: linear-gradient(90deg, #4c1d95, #7c3aed); color: #ffffff; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);'>PRO WORKSPACE</span>", unsafe_allow_html=True)
 st.sidebar.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
 
-# Main Navigation (Created only once to prevent duplicate element error)
+# Main Navigation
 navigation = st.sidebar.radio(
     "MENU_HUB",
     ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing"]
@@ -112,7 +168,7 @@ navigation = st.sidebar.radio(
 
 st.sidebar.markdown("<div style='position: fixed; bottom: 20px;'>", unsafe_allow_html=True)
 st.sidebar.divider()
-st.sidebar.markdown("⚡ **Account Status:** `Creator Level Tier`")
+st.sidebar.markdown("⚡ **Account Status:** `<span style='color:#a78bfa;'>Creator Level Tier</span>`", unsafe_allow_html=True)
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -122,7 +178,7 @@ st.sidebar.markdown("</div>", unsafe_allow_html=True)
 if navigation == "📊 Dashboard Overview":
     h_col1, h_col2 = st.columns([3, 1])
     with h_col1:
-        st.markdown("<h1 style='margin-bottom: 0;'>Welcome back, Creator! ⚡</h1>", unsafe_allow_html=True)
+        st.markdown("<h1 style='margin-bottom: 0; text-shadow: 0 0 20px rgba(255,255,255,0.2);'>Welcome back, Creator! ⚡</h1>", unsafe_allow_html=True)
         st.markdown("<p style='color: #94a3b8; font-size: 16px;'>Here is the automated overview of your ongoing video performance indexes.</p>", unsafe_allow_html=True)
     with h_col2:
         st.write("")
@@ -133,17 +189,17 @@ if navigation == "📊 Dashboard Overview":
 
     # Graphical metric cards
     c1, c2, c3, c4 = st.columns(4)
-    with c1: st.markdown(build_graphical_card("Videos Analyzed", "124", "▲ +18% from last month", "#10b981", [100, 105, 102, 110, 115, 112, 124], "#3b82f6"), unsafe_allow_html=True)
-    with c2: st.markdown(build_graphical_card("Average Score", "72 / 100", "▲ +6% from last month", "#10b981", [65, 68, 67, 70, 69, 74, 72], "#a78bfa"), unsafe_allow_html=True)
-    with c3: st.markdown(build_graphical_card("Best Performing", "91 / 100", "🏆 Cable Bill Hack.mp4", "#a78bfa", [80, 82, 85, 84, 89, 88, 91], "#f59e0b"), unsafe_allow_html=True)
-    with c4: st.markdown(build_graphical_card("Hook Strength", "78%", "▲ +9% from last month", "#10b981", [70, 72, 71, 75, 73, 76, 78], "#10b981"), unsafe_allow_html=True)
+    with c1: st.markdown(build_graphical_card("Videos Analyzed", "124", "▲ +18% from last month", "#34d399", [100, 105, 102, 110, 115, 112, 124], "#3b82f6"), unsafe_allow_html=True)
+    with c2: st.markdown(build_graphical_card("Average Score", "72 / 100", "▲ +6% from last month", "#34d399", [65, 68, 67, 70, 69, 74, 72], "#a78bfa"), unsafe_allow_html=True)
+    with c3: st.markdown(build_graphical_card("Best Performing", "91 / 100", "🏆 Cable Bill Hack.mp4", "#fcd34d", [80, 82, 85, 84, 89, 88, 91], "#f59e0b"), unsafe_allow_html=True)
+    with c4: st.markdown(build_graphical_card("Hook Strength", "78%", "▲ +9% from last month", "#34d399", [70, 72, 71, 75, 73, 76, 78], "#10b981"), unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
     # Analytics charts & lists
     chart_col, list_col = st.columns([2.3, 1.7])
     with chart_col:
-        st.markdown("### 📈 Audience Retention Patterns")
+        st.markdown("<h3 style='text-shadow: 0 0 10px rgba(255,255,255,0.1);'>📈 Audience Retention Patterns</h3>", unsafe_allow_html=True)
         st.caption("Cross-platform model trajectory metrics for the last 30 intervals")
         dates = [datetime.today() - timedelta(days=i) for i in range(30)][::-1]
         df = pd.DataFrame({
@@ -153,36 +209,36 @@ if navigation == "📊 Dashboard Overview":
             "Retention Rate": [45 + (i*0.7) + (i%5) for i in range(30)]
         })
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df['Date'], y=df['Average Score'], mode='lines', name='Avg Score', line=dict(color='#a78bfa', width=3))) 
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Average Score'], mode='lines', name='Avg Score', line=dict(color='#a78bfa', width=3), fill='tozeroy', fillcolor='rgba(167, 139, 250, 0.05)')) 
         fig.add_trace(go.Scatter(x=df['Date'], y=df['Hook Strength'], mode='lines', name='Hook Vector', line=dict(color='#3b82f6', width=2))) 
         fig.add_trace(go.Scatter(x=df['Date'], y=df['Retention Rate'], mode='lines', name='Retention Avg', line=dict(color='#10b981', width=2))) 
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)', 
             plot_bgcolor='rgba(0,0,0,0)', 
-            font=dict(color='#94a3b8'), 
+            font=dict(color='#cbd5e1'), 
             xaxis=dict(showgrid=False, linecolor='#2e2a4f'), 
-            yaxis=dict(gridcolor='#1e1b4b', range=[0, 100], linecolor='#2e2a4f'), 
+            yaxis=dict(gridcolor='rgba(46, 42, 79, 0.4)', range=[0, 100], linecolor='#2e2a4f'), 
             margin=dict(l=10, r=10, t=10, b=10), 
             legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
         )
         st.plotly_chart(fig, use_container_width=True)
 
     with list_col:
-        st.markdown("### 🕒 Real-Time Audit Feed")
+        st.markdown("<h3 style='text-shadow: 0 0 10px rgba(255,255,255,0.1);'>🕒 Real-Time Audit Feed</h3>", unsafe_allow_html=True)
         st.caption("Latest short-form items run through the core processor")
         st.markdown("""
-        <div style='background: #0f0f1a; border: 1px solid #2e2a4f; border-radius: 12px; padding: 16px;'>
-            <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1b4b; padding-bottom: 12px; margin-bottom: 12px;'>
-                <div><span style='font-weight:bold; color:#ffffff;'>Cable Bill Hack.mp4</span><br><span style='color:#64748b; font-size:12px;'>May 18 • 0:56 mins</span></div>
-                <div style='background: #065f46; color: #34d399; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px;'>91</div>
+        <div style='background: linear-gradient(180deg, rgba(15,15,26,0.9) 0%, rgba(20,20,36,0.9) 100%); border: 1px solid rgba(124,58,237,0.2); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>
+            <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(124,58,237,0.2); padding-bottom: 14px; margin-bottom: 14px; transition: all 0.2s;' onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
+                <div><span style='font-weight:bold; color:#ffffff; font-size: 15px;'>Cable Bill Hack.mp4</span><br><span style='color:#94a3b8; font-size:12px;'>May 18 • 0:56 mins</span></div>
+                <div style='background: linear-gradient(90deg, #059669, #10b981); color: #ffffff; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px; box-shadow: 0 0 15px rgba(16,185,129,0.4);'>91</div>
             </div>
-            <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1b4b; padding-bottom: 12px; margin-bottom: 12px;'>
-                <div><span style='font-weight:bold; color:#ffffff;'>Stop Wasting Money.mp4</span><br><span style='color:#64748b; font-size:12px;'>May 17 • 0:48 mins</span></div>
-                <div style='background: #854d0e; color: #fef08a; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px;'>67</div>
+            <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(124,58,237,0.2); padding-bottom: 14px; margin-bottom: 14px; transition: all 0.2s;' onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
+                <div><span style='font-weight:bold; color:#ffffff; font-size: 15px;'>Stop Wasting Money.mp4</span><br><span style='color:#94a3b8; font-size:12px;'>May 17 • 0:48 mins</span></div>
+                <div style='background: linear-gradient(90deg, #d97706, #f59e0b); color: #ffffff; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px; box-shadow: 0 0 15px rgba(245,158,11,0.4);'>67</div>
             </div>
-            <div style='display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e1b4b; padding-bottom: 12px; margin-bottom: 12px;'>
-                <div><span style='font-weight:bold; color:#ffffff;'>Easy Phone Trick.mp4</span><br><span style='color:#64748b; font-size:12px;'>May 16 • 0:35 mins</span></div>
-                <div style='background: #065f46; color: #34d399; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px;'>84</div>
+            <div style='display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;' onmouseover="this.style.transform='translateX(5px)'" onmouseout="this.style.transform='translateX(0)'">
+                <div><span style='font-weight:bold; color:#ffffff; font-size: 15px;'>Easy Phone Trick.mp4</span><br><span style='color:#94a3b8; font-size:12px;'>May 16 • 0:35 mins</span></div>
+                <div style='background: linear-gradient(90deg, #059669, #10b981); color: #ffffff; padding: 6px 14px; border-radius: 30px; font-weight: 800; font-size: 14px; box-shadow: 0 0 15px rgba(16,185,129,0.4);'>84</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -192,8 +248,8 @@ if navigation == "📊 Dashboard Overview":
 # 5. CORE AUDIO-VISUAL AI SCAN ENGINE
 # ==========================================
 elif navigation == "🎬 Analyze Video Engine":
-    st.markdown("<h1>🎬 Algorithmic Pre-Flight Simulator</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #94a3b8;'>Select the target algorithm below, then upload your short-form asset to initiate a platform-specific virality audit.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-shadow: 0 0 20px rgba(255,255,255,0.2);'>🎬 Algorithmic Pre-Flight Simulator</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8; font-size: 16px;'>Select the target algorithm below, then upload your short-form asset to initiate a platform-specific virality audit.</p>", unsafe_allow_html=True)
     st.divider()
 
     # The Interactive Platform Tabs
@@ -259,7 +315,6 @@ elif navigation == "🎬 Analyze Video Engine":
                                 
                                 update_progress(80, "Running Virality Audit...")
                                 
-                                # Highly specific dynamic prompt injection based on the active tab
                                 system_prompt = f"""
                                 You are an elite virality engineer and retention analyst for short-form video content.
                                 Your objective is to audit this video specifically for the **{platform_name}** algorithm.
@@ -312,38 +367,51 @@ elif navigation == "🎬 Analyze Video Engine":
                                 if os.path.exists(temp_filename): 
                                     os.remove(temp_filename)
                         
-                        bar.empty() # Clear the bar when finished
+                        bar.empty()
 
             # --- POST-SIMULATION LAYOUT BLOCK ---
             if f"dash_report_{i}" in st.session_state:
                 st.divider()
-                st.markdown(f"<h3 style='color: #a78bfa;'>🧠 {platform_name} Diagnostic Matrix</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='color: #c084fc; text-shadow: 0 0 15px rgba(192, 132, 252, 0.4);'>🧠 {platform_name} Diagnostic Matrix</h3>", unsafe_allow_html=True)
                 
-                # Render the 4 animated metric gauges horizontally
+                # Render the 4 Premium Animated Metric Gauges
                 col1, col2, col3, col4 = st.columns(4)
 
                 with col1:
-                    render_circular_gauge(score=st.session_state[f"hook_score_{i}"], max_score=10, label="⚡ Hook", color="#00f2fe")
+                    render_circular_gauge(st.session_state[f"hook_score_{i}"], 10, "⚡ Hook", "#00f2fe", "#4facfe", "rgba(0, 242, 254, 0.5)")
                 with col2:
-                    render_circular_gauge(score=st.session_state[f"ret_score_{i}"], max_score=10, label="⏱️ Retention", color="#d946ef")
+                    render_circular_gauge(st.session_state[f"ret_score_{i}"], 10, "⏱️ Retention", "#d946ef", "#8b5cf6", "rgba(217, 70, 239, 0.5)")
                 with col3:
-                    render_circular_gauge(score=st.session_state[f"emo_score_{i}"], max_score=10, label="🔥 Emotional", color="#ff5e62")
+                    render_circular_gauge(st.session_state[f"emo_score_{i}"], 10, "🔥 Emotional", "#ff5e62", "#ff9966", "rgba(255, 94, 98, 0.5)")
                 with col4:
-                    render_circular_gauge(score=st.session_state[f"conv_score_{i}"], max_score=10, label="🎯 Conversion", color="#10b981")
+                    render_circular_gauge(st.session_state[f"conv_score_{i}"], 10, "🎯 Conversion", "#10b981", "#059669", "rgba(16, 185, 129, 0.5)")
 
-                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("<br><br>", unsafe_allow_html=True)
                 
-                # Render deep AI textual breakdown
-                with st.container(border=True): 
-                    st.markdown(st.session_state[f"dash_report_{i}"])
+                # Render deep AI textual breakdown in a glassmorphism container
+                st.markdown("""
+                <style>
+                .glass-container {
+                    background: rgba(20, 20, 36, 0.6);
+                    backdrop-filter: blur(12px);
+                    border: 1px solid rgba(124, 58, 237, 0.3);
+                    border-radius: 16px;
+                    padding: 30px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.4), inset 0 0 20px rgba(124, 58, 237, 0.05);
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                
+                with st.container():
+                    st.markdown(f"<div class='glass-container'>{st.session_state[f'dash_report_{i}']}</div>", unsafe_allow_html=True)
 
 
 # ==========================================
 # 6. INTERACTIVE HISTORICAL DATA REPOSITORY
 # ==========================================
 elif navigation == "📁 Saved Video History":
-    st.markdown("<h1>📁 Secure Asset Retention Logs</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #94a3b8;'>Search, review, filter, and extract analytical reports from previously processed short-form content models.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-shadow: 0 0 20px rgba(255,255,255,0.2);'>📁 Secure Asset Retention Logs</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8; font-size: 16px;'>Search, review, filter, and extract analytical reports from previously processed short-form content models.</p>", unsafe_allow_html=True)
     st.divider()
 
     search_q = st.text_input("🔍 Search Historical Filenames", placeholder="Type a file keyword to filter data...")
@@ -368,16 +436,16 @@ elif navigation == "📁 Saved Video History":
 # 7. SUBSCRIPTION PLAN MODES
 # ==========================================
 elif navigation == "💎 Subscriptions & Pricing":
-    st.markdown("<h1>💎 Premium Architecture Tiers</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #94a3b8;'>Upgrade or scale infrastructure boundaries to suit agency rendering throughput requests.</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-shadow: 0 0 20px rgba(255,255,255,0.2);'>💎 Premium Architecture Tiers</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8; font-size: 16px;'>Upgrade or scale infrastructure boundaries to suit agency rendering throughput requests.</p>", unsafe_allow_html=True)
     st.divider()
 
     pc1, pc2, pc3 = st.columns(3)
     with pc1:
-        st.markdown("""<div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'><h3 style='color:#94a3b8;'>Starter Sandbox</h3><h2 style='font-size:36px; margin: 15px 0;'>$0 <span style='font-size:14px; color:gray;'>/ month</span></h2><hr style='border-color:#1e1b4b;'><p style='text-align:left;'>• 5 Basic Scans Monthly<br>• Max file duration 60s<br>• Core Processing Units</p><div style='margin-top:30px; padding:10px; background:#1e1b4b; border-radius:8px; color:gray; font-size:12px; font-weight:bold;'>INACTIVE IN WORKSPACE</div></div>""", unsafe_allow_html=True)
+        st.markdown("""<div style='background: rgba(15,15,26,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 30px; text-align:center; transition: 0.3s;' onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'"><h3 style='color:#94a3b8;'>Starter Sandbox</h3><h2 style='font-size:42px; margin: 15px 0; color: #e2e8f0;'>$0 <span style='font-size:16px; color:gray;'>/ month</span></h2><hr style='border-color:rgba(255,255,255,0.1);'><p style='text-align:left; color:#cbd5e1; line-height: 1.8;'>• 5 Basic Scans Monthly<br>• Max file duration 60s<br>• Core Processing Units</p><div style='margin-top:35px; padding:12px; background:rgba(255,255,255,0.05); border-radius:10px; color:gray; font-size:13px; font-weight:800; letter-spacing: 1px;'>INACTIVE IN WORKSPACE</div></div>""", unsafe_allow_html=True)
     with pc2:
-        st.markdown("""<div style='background: linear-gradient(145deg, #180f2b 0%, #0f0f1a 100%); border: 2px solid #7c3aed; border-radius:16px; padding:24px; text-align:center; box-shadow: 0 0 25px rgba(124,58,237,0.25);'><h3 style='color:#a78bfa;'>Creator Studio Pro</h3><h2 style='font-size:36px; margin: 15px 0; color:#ffffff;'>$49 <span style='font-size:14px; color:#a78bfa;'>/ month</span></h2><hr style='border-color:#2e2a4f;'><p style='text-align:left; color:#e2e8f0;'>• Unlimited Video Engine Processing<br>• Max file duration 120s<br>• Priority Neural Grid Queue<br>• Custom Analytics Exports</p></div>""", unsafe_allow_html=True)
+        st.markdown("""<div style='background: linear-gradient(145deg, rgba(24,15,43,0.9) 0%, rgba(15,15,26,0.95) 100%); backdrop-filter: blur(10px); border: 2px solid #a855f7; border-radius: 20px; padding: 30px; text-align:center; box-shadow: 0 0 30px rgba(168,85,247,0.3); transform: scale(1.03); transition: 0.3s;' onmouseover="this.style.boxShadow='0 0 45px rgba(168,85,247,0.5)'" onmouseout="this.style.boxShadow='0 0 30px rgba(168,85,247,0.3)'"><h3 style='color:#d8b4fe; text-shadow: 0 0 10px rgba(216,180,254,0.5);'>Creator Studio Pro</h3><h2 style='font-size:42px; margin: 15px 0; color:#ffffff; text-shadow: 0 0 15px rgba(255,255,255,0.3);'>$49 <span style='font-size:16px; color:#d8b4fe;'>/ month</span></h2><hr style='border-color:rgba(168,85,247,0.3);'><p style='text-align:left; color:#f1f5f9; line-height: 1.8;'>• Unlimited Video Engine Processing<br>• Max file duration 120s<br>• Priority Neural Grid Queue<br>• Custom Analytics Exports</p></div>""", unsafe_allow_html=True)
         st.write("")
         st.button("✨ CURRENT WORKSPACE ACCOUNT TIER", disabled=True, use_container_width=True)
     with pc3:
-        st.markdown("""<div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'><h3 style='color:#94a3b8;'>Production Scale</h3><h2 style='font-size:36px; margin: 15px 0;'>$199 <span style='font-size:14px; color:gray;'>/ month</span></h2><hr style='border-color:#1e1b4b;'><p style='text-align:left;'>• Unlimited Scans + Automation APIs<br>• Uncapped File Durations<br>• Dedicated AI Node Cluster access</p><div style='margin-top:30px;'></div></div>""", unsafe_allow_html=True)
+        st.markdown("""<div style='background: rgba(15,15,26,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 30px; text-align:center; transition: 0.3s;' onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'"><h3 style='color:#94a3b8;'>Production Scale</h3><h2 style='font-size:42px; margin: 15px 0; color: #e2e8f0;'>$199 <span style='font-size:16px; color:gray;'>/ month</span></h2><hr style='border-color:rgba(255,255,255,0.1);'><p style='text-align:left; color:#cbd5e1; line-height: 1.8;'>• Unlimited Scans + Automation APIs<br>• Uncapped File Durations<br>• Dedicated AI Node Cluster access</p><div style='margin-top:35px;'></div></div>""", unsafe_allow_html=True)
