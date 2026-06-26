@@ -80,6 +80,14 @@ st.markdown("""
     .stButton>button:hover { background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%) !important; box-shadow: 0 0 20px rgba(124, 58, 237, 0.6) !important; transform: scale(1.01); }
     div[data-baseweb="input"], div[data-baseweb="textarea"] { background-color: #11111f !important; border: 1px solid #2e2a4f !important; border-radius: 8px !important; }
     hr { border-color: #1e1b4b !important; }
+
+    /* Customizing Streamlit Tabs to look Premium */
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
+    .stTabs [data-baseweb="tab"] { 
+        background-color: #11111f; border-radius: 8px 8px 0px 0px; 
+        padding: 10px 20px; border: 1px solid #2e2a4f; border-bottom: none;
+    }
+    .stTabs [aria-selected="true"] { background-color: #1e1b4b !important; border-color: #7c3aed !important; color: #a78bfa !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -189,70 +197,110 @@ if navigation == "📊 Dashboard Overview":
 # ==========================================
 elif navigation == "🎬 Analyze Video Engine":
     st.markdown("<h1>🎬 Algorithmic Pre-Flight Simulator</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #94a3b8;'>Drop files into the container module below to initiate programmatic virality auditing metrics.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8;'>Select the target algorithm below, then upload your short-form asset to initiate a platform-specific virality audit.</p>", unsafe_allow_html=True)
     st.divider()
 
-    uploaded_file = st.file_uploader("Drop short-form creative assets here (.mp4 or .mov formats supported)", type=["mp4", "mov"])
+    # The New Interactive Platform Tabs
+    tab_yt, tab_ig, tab_tt, tab_fb = st.tabs(["🔴 YT Shorts", "🟣 Insta Reels", "⚫ TikTok", "🔵 FB Reels"])
+    platforms = [
+        ("YouTube Shorts", tab_yt),
+        ("Instagram Reels", tab_ig),
+        ("TikTok", tab_tt),
+        ("Facebook Reels", tab_fb)
+    ]
 
-    if uploaded_file is not None:
-        file_key = f"{uploaded_file.name}_{uploaded_file.size}"
-        temp_filename = "user_upload_temp.mp4"
-        
-        if "file_verified_key" not in st.session_state or st.session_state.file_verified_key != file_key:
-            with open(temp_filename, "wb") as f: f.write(uploaded_file.getbuffer())
-            video_analysis = VideoFileClip(temp_filename)
-            st.session_state.duration_seconds = video_analysis.duration
-            video_analysis.close() 
-            if os.path.exists(temp_filename): os.remove(temp_filename) 
-            st.session_state.file_verified_key = file_key
-
-        duration_seconds = st.session_state.duration_seconds
-        
-        if duration_seconds > 120:
-            st.error(f"🚨 Operational Error: The target clip clocks at {int(duration_seconds)}s. Ensure limits remain below 2 minutes.")
-        else:
-            st.success(f"✅ Infrastructure Verified: Length metadata constraints validated ({int(duration_seconds)}s). Framework primed.")
+    for i, (platform_name, tab) in enumerate(platforms):
+        with tab:
+            st.markdown(f"<h3 style='margin-top: 15px; color: #e2e8f0;'>Optimize for {platform_name}</h3>", unsafe_allow_html=True)
             
-            if st.button("🚀 Execute Neural Simulation Runtime"):
-                with st.spinner("Processing visual timelines and synchronizing audio tracking matrix..."):
-                    max_retries = 3
-                    retry_delay = 4
-                    for attempt in range(max_retries):
-                        try:
-                            with open(temp_filename, "wb") as f: f.write(uploaded_file.getbuffer())
-                            client = genai.Client(api_key=api_key)
-                            uploaded_ai_file = client.files.upload(file=temp_filename)
-                            
-                            while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
-                                time.sleep(2)
-                                uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
-                            
-                            system_prompt = """
-                            You are an expert retention analyst for short form video content. 
-                            Break down the video into sections: Performance Grade, 3-Second Hook Audit, Retention Drop-offs, and High-Impact Fixes. Make recommendations direct, punchy, and highly technical.
-                            """
-                            response = client.models.generate_content(model="gemini-2.5-flash", contents=[uploaded_ai_file, system_prompt])
-                            st.session_state.dash_report = response.text
-                            try: client.files.delete(name=uploaded_ai_file.name)
-                            except: pass
-                            break
-                            
-                        except APIError as e:
-                            if "503" in str(e) or "UNAVAILABLE" in str(e):
-                                if attempt < max_retries - 1:
-                                    st.warning(f"⚠️ Neural Node busy (503). Retrying in {retry_delay}s...")
-                                    time.sleep(retry_delay); retry_delay *= 2
-                                else: st.error("🚨 Cloud Architecture Overloaded. Please try re-running the simulation shortly.")
-                            else: st.error(f"API Error: {e}"); break
-                        except Exception as error:
-                            st.error(f"System Exception Encountered: {error}"); break
-                        finally:
-                            if os.path.exists(temp_filename): os.remove(temp_filename)
+            # Using unique keys for each uploader so they don't conflict
+            uploaded_file = st.file_uploader(f"Drop your {platform_name} draft here (.mp4 or .mov)", type=["mp4", "mov"], key=f"uploader_{i}")
 
-            if "dash_report" in st.session_state:
+            if uploaded_file is not None:
+                file_key = f"{uploaded_file.name}_{uploaded_file.size}_{platform_name}"
+                temp_filename = f"temp_upload_{i}.mp4"
+                
+                # Check video constraints
+                if f"file_verified_{i}" not in st.session_state or st.session_state[f"file_verified_{i}"] != file_key:
+                    with open(temp_filename, "wb") as f: 
+                        f.write(uploaded_file.getbuffer())
+                    
+                    video_analysis = VideoFileClip(temp_filename)
+                    st.session_state[f"duration_{i}"] = video_analysis.duration
+                    video_analysis.close() 
+                    if os.path.exists(temp_filename): os.remove(temp_filename) 
+                    st.session_state[f"file_verified_{i}"] = file_key
+
+                duration_seconds = st.session_state[f"duration_{i}"]
+                
+                if duration_seconds > 120:
+                    st.error(f"🚨 Operational Error: The target clip clocks at {int(duration_seconds)}s. Ensure limits remain below 2 minutes.")
+                else:
+                    st.success(f"✅ Infrastructure Verified: Validated {int(duration_seconds)}s for the {platform_name} algorithm. Framework primed.")
+                    
+                    if st.button(f"🚀 Execute {platform_name} Simulation", key=f"run_btn_{i}"):
+                        with st.spinner(f"Calibrating neural tracking to {platform_name} pacing matrices..."):
+                            max_retries = 3
+                            retry_delay = 4
+                            
+                            for attempt in range(max_retries):
+                                try:
+                                    with open(temp_filename, "wb") as f: 
+                                        f.write(uploaded_file.getbuffer())
+                                    
+                                    client = genai.Client(api_key=api_key)
+                                    uploaded_ai_file = client.files.upload(file=temp_filename)
+                                    
+                                    while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
+                                        time.sleep(2)
+                                        uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
+                                    
+                                    # Highly specific dynamic prompt injection based on the active tab
+                                    system_prompt = f"""
+                                    You are an elite virality engineer and retention analyst for short-form video content.
+                                    Your objective is to audit this video specifically for the **{platform_name}** algorithm.
+                                    
+                                    Keep in mind {platform_name}'s unique audience behavior. For example, TikTok demands aggressive 1-second hooks, FB Reels skews slightly older and relatable, YT Shorts rewards continuous loops, and Insta Reels focuses heavily on aesthetic and trending audio.
+                                    
+                                    Break down the video into sections: 
+                                    1. {platform_name} Performance Grade (Out of 100)
+                                    2. 3-Second Hook Audit
+                                    3. Retention Drop-offs (Identify exact timestamp risks)
+                                    4. High-Impact Fixes to optimize specifically for {platform_name}
+                                    
+                                    Make recommendations direct, punchy, and highly technical.
+                                    """
+                                    
+                                    response = client.models.generate_content(
+                                        model="gemini-2.5-flash", 
+                                        contents=[uploaded_ai_file, system_prompt]
+                                    )
+                                    
+                                    # Save the report for this specific tab to the session state
+                                    st.session_state[f"dash_report_{i}"] = response.text
+                                    
+                                    try: client.files.delete(name=uploaded_ai_file.name)
+                                    except: pass
+                                    break
+                                    
+                                except APIError as e:
+                                    if "503" in str(e) or "UNAVAILABLE" in str(e):
+                                        if attempt < max_retries - 1:
+                                            st.warning(f"⚠️ Neural Node busy (503). Retrying in {retry_delay}s...")
+                                            time.sleep(retry_delay); retry_delay *= 2
+                                        else: st.error("🚨 Cloud Architecture Overloaded. Please try re-running the simulation shortly.")
+                                    else: st.error(f"API Error: {e}"); break
+                                except Exception as error:
+                                    st.error(f"System Exception Encountered: {error}"); break
+                                finally:
+                                    if os.path.exists(temp_filename): os.remove(temp_filename)
+
+            # Display the report if it exists in the session state for this tab
+            if f"dash_report_{i}" in st.session_state:
                 st.divider()
-                st.markdown("<h3 style='color: #a78bfa;'>🧠 Diagnostic Output Matrix</h3>", unsafe_allow_html=True)
-                with st.container(border=True): st.markdown(st.session_state.dash_report)
+                st.markdown(f"<h3 style='color: #a78bfa;'>🧠 {platform_name} Diagnostic Matrix</h3>", unsafe_allow_html=True)
+                with st.container(border=True): 
+                    st.markdown(st.session_state[f"dash_report_{i}"])
 
 # ==========================================
 # 6. INTERACTIVE HISTORICAL DATA REPOSITORY
