@@ -237,8 +237,8 @@ elif navigation == "🎬 Analyze Video Engine":
                     st.error(f"🚨 Operational Error: The target clip clocks at {int(duration_seconds)}s. Ensure limits remain below 2 minutes.")
                 else:
                     st.success(f"✅ Infrastructure Verified: Validated {int(duration_seconds)}s for the {platform_name} algorithm. Framework primed.")
-                    if st.button(f"🚀 Execute {platform_name} Simulation", key=f"run_btn_{i}"):
-        # Progress bar setup (Ensure this is indented)
+    if st.button(f"🚀 Execute {platform_name} Simulation", key=f"run_btn_{i}"):
+        # These lines are now indented further to the right
         progress_text = "Initiating Neural Connection..."
         bar = st.progress(0, text=progress_text)
         
