@@ -30,8 +30,7 @@ st.set_page_config(
 st.markdown("""
     <style>
     /* Absolute Layout Deep-Black Foundations */
-    .stApp { background-color: #06060a !important; color: #e2e8f0 !important; }
-    [data-testid="stSidebar"] { background-color: #0b0b11 !important; border-right: 1px solid #1e1b4b !important; }
+    
     h1, h2, h3, h4, h5, h6 { font-family: 'Inter', sans-serif !important; font-weight: 700 !important; color: #ffffff !important; }
     
     /* Integrated High-Fidelity Premium Metric Card */
