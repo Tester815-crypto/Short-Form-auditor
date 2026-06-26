@@ -1,0 +1,22 @@
+[theme]
+# Set your custom theme to inherit from Streamlit's dark theme
+base = "dark"
+
+# Primary accent color for interactive elements and focus states
+primaryColor = "#7c3aed"
+
+# The main background color of your app
+backgroundColor = "#06060a"
+
+# Used for contrast in widgets and input regions
+secondaryBackgroundColor = "#11111f"
+
+# The text color for your app
+textColor = "#e2e8f0"
+
+# Set the base font for the application
+font = "sans serif"
+
+[theme.sidebar]
+# You can configure the sidebar separately using this table
+backgroundColor = "#0b0b11"
