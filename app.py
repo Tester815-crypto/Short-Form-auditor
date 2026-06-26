@@ -9,7 +9,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 import os
 from datetime import datetime, timedelta
-from moviepy.editor import VideoFileClip
+
+# FIXED IMPORT: MoviePy 2.0+ syntax
+from moviepy import VideoFileClip 
+
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
@@ -64,7 +67,6 @@ def render_circular_gauge(score, max_score, label, color_start, color_end, shado
     grad_id = f"grad_{label.replace(' ', '')}"
     glow_id = f"glow_{label.replace(' ', '')}"
     
-    # We use a full HTML document for the component to ensure styles and hover states work
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -158,7 +160,6 @@ def render_circular_gauge(score, max_score, label, color_start, color_end, shado
     </body>
     </html>
     """
-    # Use components.html to completely bypass Streamlit's sanitization
     components.html(html_content, height=270)
 
 
@@ -231,9 +232,11 @@ st.sidebar.markdown("<h2 style='color: #c084fc; margin-bottom: 5px; letter-spaci
 st.sidebar.markdown("<span style='background: linear-gradient(90deg, #4c1d95, #7c3aed); color: #ffffff; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 800; box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);'>PRO WORKSPACE</span>", unsafe_allow_html=True)
 st.sidebar.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
 
+# FIXED DUPLICATE ID: Added a unique `key` parameter to prevent identical element collisions
 navigation = st.sidebar.radio(
-    "MENU_HUB",
-    ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing"]
+    "Navigation Menu",
+    ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing"],
+    key="nav_sidebar_radio_main"
 )
 
 st.sidebar.markdown("<div style='position: fixed; bottom: 20px;'>", unsafe_allow_html=True)
@@ -257,7 +260,6 @@ if navigation == "📊 Dashboard Overview":
 
     st.divider()
 
-    # Isolated HTML components for the metric cards
     c1, c2, c3, c4 = st.columns(4)
     with c1: build_graphical_card("Videos Analyzed", "124", "▲ +18% from last month", "#34d399", [100, 105, 102, 110, 115, 112, 124], "#3b82f6")
     with c2: build_graphical_card("Average Score", "72 / 100", "▲ +6% from last month", "#34d399", [65, 68, 67, 70, 69, 74, 72], "#a78bfa")
@@ -296,7 +298,6 @@ if navigation == "📊 Dashboard Overview":
         st.markdown("<h3 style='text-shadow: 0 0 10px rgba(255,255,255,0.1);'>🕒 Real-Time Audit Feed</h3>", unsafe_allow_html=True)
         st.caption("Latest short-form items run through the core processor")
         
-        # Wrapped in a component to guarantee hover translation works
         feed_html = """
         <!DOCTYPE html>
         <html>
@@ -466,6 +467,7 @@ elif navigation == "🎬 Analyze Video Engine":
                 with st.container():
                     st.markdown(f"<div class='glass-container'>{st.session_state[f'dash_report_{i}']}</div>", unsafe_allow_html=True)
 
+
 # ==========================================
 # 6. INTERACTIVE HISTORICAL DATA REPOSITORY
 # ==========================================
@@ -489,6 +491,7 @@ elif navigation == "📁 Saved Video History":
         "Retention Index": st.column_config.ProgressColumn("Retention Index", min_value=0, max_value=100, format="%d pts"),
         "Project Filename": st.column_config.TextColumn("Target File Name"),
     })
+
 
 # ==========================================
 # 7. SUBSCRIPTION PLAN MODES
