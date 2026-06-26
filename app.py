@@ -238,9 +238,40 @@ elif navigation == "🎬 Analyze Video Engine":
                     st.success(f"✅ Infrastructure Verified: Validated {int(duration_seconds)}s for the {platform_name} algorithm. Framework primed.")
                     
                     if st.button(f"🚀 Execute {platform_name} Simulation", key=f"run_btn_{i}"):
-                        with st.spinner(f"Calibrating neural tracking to {platform_name} pacing matrices..."):
-                            max_retries = 3
-                            retry_delay = 4
+        # Initialize the gauge
+        from streamlit_circular_progress import CircularProgress
+        gauge = CircularProgress(label="Initiating Neural Connection...", value=0, size="medium", key=f"gauge_{i}")
+        
+        max_retries = 3
+        retry_delay = 4
+        
+        for attempt in range(max_retries):
+            try:
+                gauge.update(value=20, label="Uploading Asset to Node...")
+                with open(temp_filename, "wb") as f: 
+                    f.write(uploaded_file.getbuffer())
+                
+                client = genai.Client(api_key=api_key)
+                uploaded_ai_file = client.files.upload(file=temp_filename)
+                
+                gauge.update(value=50, label="Calibrating Neural Matrices...")
+                while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
+                    time.sleep(2)
+                    uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
+                
+                gauge.update(value=80, label="Running Virality Audit...")
+                # ... [rest of your Gemini generation code] ...
+                
+                response = client.models.generate_content(...) # (Your existing call)
+                
+                gauge.update(value=100, label="Audit Complete.")
+                st.session_state[f"dash_report_{i}"] = response.text
+                
+                # ... (cleanup code)
+                break
+            except Exception as error:
+                gauge.update(value=0, label="Error encountered.")
+                st.error(f"System Exception: {error}"); break
                             
                             for attempt in range(max_retries):
                                 try:
