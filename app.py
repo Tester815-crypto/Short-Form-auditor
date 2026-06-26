@@ -1,10 +1,3 @@
-Here is the complete, fully integrated code for ViraLens AI.
-
-I have seamlessly injected the post-simulation layout directly into the rendering loop. I also added a dynamic randomizer (`import random`) to generate realistic float scores (e.g., 8.5, 9.2) for the gauges right after the Gemini audit finishes, storing them in the session state so they persist perfectly when the user clicks around the dashboard.
-
-I have also cleaned up the formatting to ensure there are no copy-paste indentation errors.
-
-```python
 import streamlit as st
 import os
 import time
