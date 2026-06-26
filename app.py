@@ -434,4 +434,3 @@ elif navigation == "💎 Subscriptions & Pricing":
     with pc3:
         st.markdown("""<div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'><h3 style='color:#94a3b8;'>Production Scale</h3><h2 style='font-size:36px; margin: 15px 0;'>$199 <span style='font-size:14px; color:gray;'>/ month</span></h2><hr style='border-color:#1e1b4b;'><p style='text-align:left;'>• Unlimited Scans + Automation APIs<br>• Uncapped File Durations<br>• Dedicated AI Node Cluster access</p><div style='margin-top:30px;'></div></div>""", unsafe_allow_html=True)
 
-```
