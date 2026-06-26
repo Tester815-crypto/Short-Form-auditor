@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import streamlit as st
 import os  # Added missing import
 from datetime import datetime, timedelta
-from moviepy.editor import VideoFileClip
+from moviepy import VideoFileClip
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
