@@ -1,7 +1,7 @@
 streamlit
+pandas
+matplotlib
+plotly
 moviepy
 google-genai
 python-dotenv
-plotly
-pandas
-matplotlib
