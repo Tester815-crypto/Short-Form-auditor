@@ -6,14 +6,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import streamlit as st
-import os  # Added missing import
+import os
 from datetime import datetime, timedelta
 from moviepy import VideoFileClip
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
 
-# Initialize configurations
+# ==========================================
+# 1. INITIALIZATION & CONFIGURATIONS
+# ==========================================
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 
@@ -43,6 +45,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+
+# ==========================================
+# 2. HELPER UI & GRAPHICS ENGINES
+# ==========================================
 def render_circular_gauge(score, max_score, label, color):
     percentage = min(max(score / max_score, 0.0), 1.0)
     dash_offset = 251.2 - (percentage * 251.2)
@@ -63,64 +69,7 @@ def render_circular_gauge(score, max_score, label, color):
     """
     return st.markdown(gauge_html, unsafe_allow_html=True)
 
-# Sidebar
-st.sidebar.markdown("## 🔮 ViraLens AI")
-navigation = st.sidebar.radio("MENU_HUB", ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing"])
 
-# --- CORE ENGINE LOGIC ---
-if navigation == "🎬 Analyze Video Engine":
-    st.markdown("<h1>🎬 Algorithmic Pre-Flight Simulator</h1>", unsafe_allow_html=True)
-    tab_yt, tab_ig, tab_tt, tab_fb = st.tabs(["🔴 YT Shorts", "🟣 Insta Reels", "⚫ TikTok", "🔵 FB Reels"])
-    platforms = [("YouTube Shorts", tab_yt), ("Instagram Reels", tab_ig), ("TikTok", tab_tt), ("Facebook Reels", tab_fb)]
-
-    for i, (platform_name, tab) in enumerate(platforms):
-        with tab:
-            uploaded_file = st.file_uploader(f"Drop your {platform_name} draft", type=["mp4", "mov"], key=f"uploader_{i}")
-            if uploaded_file is not None:
-                temp_filename = f"temp_{i}.mp4"
-                with open(temp_filename, "wb") as f: f.write(uploaded_file.getbuffer())
-                
-                # Check duration
-                with VideoFileClip(temp_filename) as video:
-                    duration = video.duration
-                
-                if duration > 120:
-                    st.error("Clip too long (max 120s).")
-                else:
-                    st.success(f"Validated {int(duration)}s.")
-                    if st.button(f"🚀 Run Simulation {platform_name}", key=f"run_{i}"):
-                        bar = st.progress(0, text="Initiating...")
-                        # Simulation logic indented correctly
-                        for attempt in range(3):
-                            try:
-                                bar.progress(50, text="Processing...")
-                                client = genai.Client(api_key=api_key)
-                                # ... (Insert your remaining API/genai call logic here) ...
-                                st.success("Audit complete.")
-                                break
-                            except Exception as e:
-                                st.error(f"Attempt {attempt+1} failed: {e}")
-                        bar.empty()
-                if os.path.exists(temp_filename): os.remove(temp_filename)
-
-# ==========================================
-# 3. SIDEBAR PLATFORM CONFIGURATION
-# ==========================================
-st.sidebar.markdown("<h2 style='color: #a78bfa; margin-bottom: 5px; letter-spacing:-0.03em;'>🔮 ViraLens AI</h2>", unsafe_allow_html=True)
-st.sidebar.markdown("<span style='background-color: #2e1065; color: #c084fc; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;'>PRO WORKSPACE</span>", unsafe_allow_html=True)
-st.sidebar.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
-
-navigation = st.sidebar.radio(
-    "MENU_HUB",
-    ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing"]
-)
-
-st.sidebar.markdown("<div style='position: fixed; bottom: 20px;'>", unsafe_allow_html=True)
-st.sidebar.divider()
-st.sidebar.markdown("⚡ **Account Status:** `Creator Level Tier`")
-st.sidebar.markdown("</div>", unsafe_allow_html=True)
-
-# Helper Engines to build embedded base64 sparkline cards
 def get_sparkline_base64(trend_data, color_hex):
     fig, ax = plt.subplots(figsize=(3, 0.55), dpi=100)
     ax.plot(trend_data, color=color_hex, linewidth=2.5)
@@ -132,6 +81,7 @@ def get_sparkline_base64(trend_data, color_hex):
     plt.savefig(buf, format='png', facecolor=fig.get_facecolor(), edgecolor='none', bbox_inches='tight')
     plt.close(fig)
     return base64.b64encode(buf.getvalue()).decode('utf-8')
+
 
 def build_graphical_card(title, value, delta, delta_color, trend_data, line_color):
     img_b64 = get_sparkline_base64(trend_data, line_color)
@@ -145,6 +95,26 @@ def build_graphical_card(title, value, delta, delta_color, trend_data, line_colo
         <img class="sparkline-img" src="data:image/png;base64,{img_b64}" />
     </div>
     """
+
+
+# ==========================================
+# 3. SIDEBAR PLATFORM CONFIGURATION
+# ==========================================
+st.sidebar.markdown("<h2 style='color: #a78bfa; margin-bottom: 5px; letter-spacing:-0.03em;'>🔮 ViraLens AI</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<span style='background-color: #2e1065; color: #c084fc; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;'>PRO WORKSPACE</span>", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+
+# Main Navigation (Created only once to prevent duplicate element error)
+navigation = st.sidebar.radio(
+    "MENU_HUB",
+    ["📊 Dashboard Overview", "🎬 Analyze Video Engine", "📁 Saved Video History", "💎 Subscriptions & Pricing"]
+)
+
+st.sidebar.markdown("<div style='position: fixed; bottom: 20px;'>", unsafe_allow_html=True)
+st.sidebar.divider()
+st.sidebar.markdown("⚡ **Account Status:** `Creator Level Tier`")
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
+
 
 # ==========================================
 # 4. PLATFORM INTERACTIVE DASHBOARD
@@ -176,12 +146,25 @@ if navigation == "📊 Dashboard Overview":
         st.markdown("### 📈 Audience Retention Patterns")
         st.caption("Cross-platform model trajectory metrics for the last 30 intervals")
         dates = [datetime.today() - timedelta(days=i) for i in range(30)][::-1]
-        df = pd.DataFrame({"Date": dates, "Average Score": [62 + (i*0.4) + (i%4) for i in range(30)], "Hook Strength": [71 + (i*0.3) - (i%3) for i in range(30)], "Retention Rate": [45 + (i*0.7) + (i%5) for i in range(30)]})
+        df = pd.DataFrame({
+            "Date": dates, 
+            "Average Score": [62 + (i*0.4) + (i%4) for i in range(30)], 
+            "Hook Strength": [71 + (i*0.3) - (i%3) for i in range(30)], 
+            "Retention Rate": [45 + (i*0.7) + (i%5) for i in range(30)]
+        })
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=df['Date'], y=df['Average Score'], mode='lines', name='Avg Score', line=dict(color='#a78bfa', width=3))) 
         fig.add_trace(go.Scatter(x=df['Date'], y=df['Hook Strength'], mode='lines', name='Hook Vector', line=dict(color='#3b82f6', width=2))) 
         fig.add_trace(go.Scatter(x=df['Date'], y=df['Retention Rate'], mode='lines', name='Retention Avg', line=dict(color='#10b981', width=2))) 
-        fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#94a3b8'), xaxis=dict(showgrid=False, linecolor='#2e2a4f'), yaxis=dict(gridcolor='#1e1b4b', range=[0, 100], linecolor='#2e2a4f'), margin=dict(l=10, r=10, t=10, b=10), legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1))
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)', 
+            font=dict(color='#94a3b8'), 
+            xaxis=dict(showgrid=False, linecolor='#2e2a4f'), 
+            yaxis=dict(gridcolor='#1e1b4b', range=[0, 100], linecolor='#2e2a4f'), 
+            margin=dict(l=10, r=10, t=10, b=10), 
+            legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1)
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     with list_col:
@@ -204,6 +187,7 @@ if navigation == "📊 Dashboard Overview":
         </div>
         """, unsafe_allow_html=True)
 
+
 # ==========================================
 # 5. CORE AUDIO-VISUAL AI SCAN ENGINE
 # ==========================================
@@ -212,7 +196,7 @@ elif navigation == "🎬 Analyze Video Engine":
     st.markdown("<p style='color: #94a3b8;'>Select the target algorithm below, then upload your short-form asset to initiate a platform-specific virality audit.</p>", unsafe_allow_html=True)
     st.divider()
 
-    # The New Interactive Platform Tabs
+    # The Interactive Platform Tabs
     tab_yt, tab_ig, tab_tt, tab_fb = st.tabs(["🔴 YT Shorts", "🟣 Insta Reels", "⚫ TikTok", "🔵 FB Reels"])
     platforms = [
         ("YouTube Shorts", tab_yt),
@@ -225,7 +209,6 @@ elif navigation == "🎬 Analyze Video Engine":
         with tab:
             st.markdown(f"<h3 style='margin-top: 15px; color: #e2e8f0;'>Optimize for {platform_name}</h3>", unsafe_allow_html=True)
             
-            # Using unique keys for each uploader so they don't conflict
             uploaded_file = st.file_uploader(f"Drop your {platform_name} draft here (.mp4 or .mov)", type=["mp4", "mov"], key=f"uploader_{i}")
 
             if uploaded_file is not None:
@@ -315,22 +298,23 @@ elif navigation == "🎬 Analyze Video Engine":
                                 if "503" in str(e) or "UNAVAILABLE" in str(e):
                                     if attempt < max_retries - 1:
                                         st.warning(f"⚠️ Neural Node busy (503). Retrying in {retry_delay}s...")
-                                        time.sleep(retry_delay); retry_delay *= 2
+                                        time.sleep(retry_delay)
+                                        retry_delay *= 2
                                     else: 
                                         st.error("🚨 Cloud Architecture Overloaded. Please try re-running the simulation shortly.")
                                 else: 
-                                    st.error(f"API Error: {e}"); break
+                                    st.error(f"API Error: {e}")
+                                    break
                             except Exception as error:
-                                st.error(f"System Exception Encountered: {error}"); break
+                                st.error(f"System Exception Encountered: {error}")
+                                break
                             finally:
                                 if os.path.exists(temp_filename): 
                                     os.remove(temp_filename)
                         
                         bar.empty() # Clear the bar when finished
 
-            # =================================================================
-            # 🚀 POST-SIMULATION LAYOUT BLOCK
-            # =================================================================
+            # --- POST-SIMULATION LAYOUT BLOCK ---
             if f"dash_report_{i}" in st.session_state:
                 st.divider()
                 st.markdown(f"<h3 style='color: #a78bfa;'>🧠 {platform_name} Diagnostic Matrix</h3>", unsafe_allow_html=True)
@@ -349,9 +333,10 @@ elif navigation == "🎬 Analyze Video Engine":
 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                # Render the deep AI textual breakdown below the gauges
+                # Render deep AI textual breakdown
                 with st.container(border=True): 
                     st.markdown(st.session_state[f"dash_report_{i}"])
+
 
 # ==========================================
 # 6. INTERACTIVE HISTORICAL DATA REPOSITORY
@@ -365,15 +350,19 @@ elif navigation == "📁 Saved Video History":
     history_data = {
         "Project Filename": ["Cable Bill Hack.mp4", "Stop Wasting Money.mp4", "Easy Phone Trick.mp4"],
         "Execution Date": ["2026-06-18", "2026-06-17", "2026-06-16"],
-        "Duration": ["56s", "48s", "35s"], "Retention Index": [91, 67, 84], "Platform Optimized": ["TikTok Pro", "YT Shorts", "Instagram Reels"]
+        "Duration": ["56s", "48s", "35s"], 
+        "Retention Index": [91, 67, 84], 
+        "Platform Optimized": ["TikTok Pro", "YT Shorts", "Instagram Reels"]
     }
     df_history = pd.DataFrame(history_data)
-    if search_q: df_history = df_history[df_history["Project Filename"].str.contains(search_q, case=False)]
+    if search_q: 
+        df_history = df_history[df_history["Project Filename"].str.contains(search_q, case=False)]
 
     st.dataframe(df_history, use_container_width=True, hide_index=True, column_config={
         "Retention Index": st.column_config.ProgressColumn("Retention Index", min_value=0, max_value=100, format="%d pts"),
         "Project Filename": st.column_config.TextColumn("Target File Name"),
     })
+
 
 # ==========================================
 # 7. SUBSCRIPTION PLAN MODES
@@ -388,7 +377,7 @@ elif navigation == "💎 Subscriptions & Pricing":
         st.markdown("""<div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'><h3 style='color:#94a3b8;'>Starter Sandbox</h3><h2 style='font-size:36px; margin: 15px 0;'>$0 <span style='font-size:14px; color:gray;'>/ month</span></h2><hr style='border-color:#1e1b4b;'><p style='text-align:left;'>• 5 Basic Scans Monthly<br>• Max file duration 60s<br>• Core Processing Units</p><div style='margin-top:30px; padding:10px; background:#1e1b4b; border-radius:8px; color:gray; font-size:12px; font-weight:bold;'>INACTIVE IN WORKSPACE</div></div>""", unsafe_allow_html=True)
     with pc2:
         st.markdown("""<div style='background: linear-gradient(145deg, #180f2b 0%, #0f0f1a 100%); border: 2px solid #7c3aed; border-radius:16px; padding:24px; text-align:center; box-shadow: 0 0 25px rgba(124,58,237,0.25);'><h3 style='color:#a78bfa;'>Creator Studio Pro</h3><h2 style='font-size:36px; margin: 15px 0; color:#ffffff;'>$49 <span style='font-size:14px; color:#a78bfa;'>/ month</span></h2><hr style='border-color:#2e2a4f;'><p style='text-align:left; color:#e2e8f0;'>• Unlimited Video Engine Processing<br>• Max file duration 120s<br>• Priority Neural Grid Queue<br>• Custom Analytics Exports</p></div>""", unsafe_allow_html=True)
-        st.write(""); st.button("✨ CURRENT WORKSPACE ACCOUNT TIER", disabled=True, use_container_width=True)
+        st.write("")
+        st.button("✨ CURRENT WORKSPACE ACCOUNT TIER", disabled=True, use_container_width=True)
     with pc3:
         st.markdown("""<div style='background:#0f0f1a; border: 1px solid #1e1b4b; border-radius:16px; padding:24px; text-align:center;'><h3 style='color:#94a3b8;'>Production Scale</h3><h2 style='font-size:36px; margin: 15px 0;'>$199 <span style='font-size:14px; color:gray;'>/ month</span></h2><hr style='border-color:#1e1b4b;'><p style='text-align:left;'>• Unlimited Scans + Automation APIs<br>• Uncapped File Durations<br>• Dedicated AI Node Cluster access</p><div style='margin-top:30px;'></div></div>""", unsafe_allow_html=True)
-
