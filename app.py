@@ -11,7 +11,6 @@ from moviepy import VideoFileClip
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
-from streamlit_circular_progress import CircularProgress
 
 # ==========================================
 # 1. INITIALIZATION & CONFIGURATION
@@ -237,96 +236,78 @@ elif navigation == "🎬 Analyze Video Engine":
                     st.error(f"🚨 Operational Error: The target clip clocks at {int(duration_seconds)}s. Ensure limits remain below 2 minutes.")
                 else:
                     st.success(f"✅ Infrastructure Verified: Validated {int(duration_seconds)}s for the {platform_name} algorithm. Framework primed.")
-    if st.button(f"🚀 Execute {platform_name} Simulation", key=f"run_btn_{i}"):
-        # These lines are now indented further to the right
-        progress_text = "Initiating Neural Connection..."
-        bar = st.progress(0, text=progress_text)
-        
-        def update_progress(val, text):
-            bar.progress(val, text=text)
+                    
+                    if st.button(f"🚀 Execute {platform_name} Simulation", key=f"run_btn_{i}"):
+                        progress_text = "Initiating Neural Connection..."
+                        bar = st.progress(0, text=progress_text)
+                        
+                        def update_progress(val, text):
+                            bar.progress(val, text=text)
 
-        max_retries = 3
-        retry_delay = 4
-        
-        for attempt in range(max_retries):
-            try:
-                update_progress(20, "Uploading Asset to Node...")
-                with open(temp_filename, "wb") as f: 
-                    f.write(uploaded_file.getbuffer())
-                
-                client = genai.Client(api_key=api_key)
-                uploaded_ai_file = client.files.upload(file=temp_filename)
-                
-                update_progress(50, "Calibrating Neural Matrices...")
-                while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
-                    time.sleep(2)
-                    uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
-                
-                update_progress(80, "Running Virality Audit...")
-                # ... (rest of your existing logic) ...
-                
-                response = client.models.generate_content(...)
-                
-                update_progress(100, "Audit Complete.")
-                st.session_state[f"dash_report_{i}"] = response.text
-                
-                break
-            except Exception as error:
-                st.error(f"System Exception: {error}"); break
-        
-        bar.empty() # Clear the bar when finished
-        
-                         for attempt in range(max_retries):
-                                try:
-                                    with open(temp_filename, "wb") as f: 
-                                        f.write(uploaded_file.getbuffer())
-                                    
-                                    client = genai.Client(api_key=api_key)
-                                    uploaded_ai_file = client.files.upload(file=temp_filename)
-                                    
-                                    while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
-                                        time.sleep(2)
-                                        uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
-                                    
-                                    # Highly specific dynamic prompt injection based on the active tab
-                                    system_prompt = f"""
-                                    You are an elite virality engineer and retention analyst for short-form video content.
-                                    Your objective is to audit this video specifically for the **{platform_name}** algorithm.
-                                    
-                                    Keep in mind {platform_name}'s unique audience behavior. For example, TikTok demands aggressive 1-second hooks, FB Reels skews slightly older and relatable, YT Shorts rewards continuous loops, and Insta Reels focuses heavily on aesthetic and trending audio.
-                                    
-                                    Break down the video into sections: 
-                                    1. {platform_name} Performance Grade (Out of 100)
-                                    2. 3-Second Hook Audit
-                                    3. Retention Drop-offs (Identify exact timestamp risks)
-                                    4. High-Impact Fixes to optimize specifically for {platform_name}
-                                    
-                                    Make recommendations direct, punchy, and highly technical.
-                                    """
-                                    
-                                    response = client.models.generate_content(
-                                        model="gemini-2.5-flash", 
-                                        contents=[uploaded_ai_file, system_prompt]
-                                    )
-                                    
-                                    # Save the report for this specific tab to the session state
-                                    st.session_state[f"dash_report_{i}"] = response.text
-                                    
-                                    try: client.files.delete(name=uploaded_ai_file.name)
-                                    except: pass
-                                    break
-                                    
-                                except APIError as e:
-                                    if "503" in str(e) or "UNAVAILABLE" in str(e):
-                                        if attempt < max_retries - 1:
-                                            st.warning(f"⚠️ Neural Node busy (503). Retrying in {retry_delay}s...")
-                                            time.sleep(retry_delay); retry_delay *= 2
-                                        else: st.error("🚨 Cloud Architecture Overloaded. Please try re-running the simulation shortly.")
-                                    else: st.error(f"API Error: {e}"); break
-                                except Exception as error:
-                                    st.error(f"System Exception Encountered: {error}"); break
-                                finally:
-                                    if os.path.exists(temp_filename): os.remove(temp_filename)
+                        max_retries = 3
+                        retry_delay = 4
+                        
+                        for attempt in range(max_retries):
+                            try:
+                                update_progress(20, "Uploading Asset to Node...")
+                                with open(temp_filename, "wb") as f: 
+                                    f.write(uploaded_file.getbuffer())
+                                
+                                client = genai.Client(api_key=api_key)
+                                uploaded_ai_file = client.files.upload(file=temp_filename)
+                                
+                                update_progress(50, "Calibrating Neural Matrices...")
+                                while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
+                                    time.sleep(2)
+                                    uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
+                                
+                                update_progress(80, "Running Virality Audit...")
+                                
+                                # Highly specific dynamic prompt injection based on the active tab
+                                system_prompt = f"""
+                                You are an elite virality engineer and retention analyst for short-form video content.
+                                Your objective is to audit this video specifically for the **{platform_name}** algorithm.
+                                
+                                Keep in mind {platform_name}'s unique audience behavior. For example, TikTok demands aggressive 1-second hooks, FB Reels skews slightly older and relatable, YT Shorts rewards continuous loops, and Insta Reels focuses heavily on aesthetic and trending audio.
+                                
+                                Break down the video into sections: 
+                                1. {platform_name} Performance Grade (Out of 100)
+                                2. 3-Second Hook Audit
+                                3. Retention Drop-offs (Identify exact timestamp risks)
+                                4. High-Impact Fixes to optimize specifically for {platform_name}
+                                
+                                Make recommendations direct, punchy, and highly technical.
+                                """
+                                
+                                response = client.models.generate_content(
+                                    model="gemini-2.5-flash", 
+                                    contents=[uploaded_ai_file, system_prompt]
+                                )
+                                
+                                update_progress(100, "Audit Complete.")
+                                st.session_state[f"dash_report_{i}"] = response.text
+                                
+                                try: 
+                                    client.files.delete(name=uploaded_ai_file.name)
+                                except: 
+                                    pass
+                                break
+                            except APIError as e:
+                                if "503" in str(e) or "UNAVAILABLE" in str(e):
+                                    if attempt < max_retries - 1:
+                                        st.warning(f"⚠️ Neural Node busy (503). Retrying in {retry_delay}s...")
+                                        time.sleep(retry_delay); retry_delay *= 2
+                                    else: 
+                                        st.error("🚨 Cloud Architecture Overloaded. Please try re-running the simulation shortly.")
+                                else: 
+                                    st.error(f"API Error: {e}"); break
+                            except Exception as error:
+                                st.error(f"System Exception Encountered: {error}"); break
+                            finally:
+                                if os.path.exists(temp_filename): 
+                                    os.remove(temp_filename)
+                        
+                        bar.empty() # Clear the bar when finished
 
             # Display the report if it exists in the session state for this tab
             if f"dash_report_{i}" in st.session_state:
