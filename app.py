@@ -1,18 +1,19 @@
-import streamlit as st
-import os
 import time
 import base64
 import io
 import random
 import pandas as pd
-import matplotlib.subplots as plt_subplots # Adjusted to avoid global plt issues in Streamlit
-import matplotlib.pyplot as plt
+# Removed the faulty 'import matplotlib.subplots' line
+import matplotlib.pyplot as plt # Correct way to import plotting functionality
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
-from moviepy import VideoFileClip
+from moviepy.editor import VideoFileClip # Ensure moviepy is installed
 from google import genai
 from google.genai.errors import APIError
 from dotenv import load_dotenv
+
+# Note: Any code later in your script that used 'plt_subplots' 
+# should now be updated to use 'plt.subplots()'
 
 def render_circular_gauge(score, max_score, label, color):
     """
