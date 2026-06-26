@@ -237,40 +237,46 @@ elif navigation == "🎬 Analyze Video Engine":
                     st.error(f"🚨 Operational Error: The target clip clocks at {int(duration_seconds)}s. Ensure limits remain below 2 minutes.")
                 else:
                     st.success(f"✅ Infrastructure Verified: Validated {int(duration_seconds)}s for the {platform_name} algorithm. Framework primed.")
-                    
                     if st.button(f"🚀 Execute {platform_name} Simulation", key=f"run_btn_{i}"):
-    # Initialize native progress bar
-    progress_text = "Initiating Neural Connection..."
-    bar = st.progress(0, text=progress_text)
-    
-    # Use a helper to update both the bar and the text
-    def update_progress(val, text):
-        bar.progress(val, text=text)
+        # Progress bar setup (Ensure this is indented)
+        progress_text = "Initiating Neural Connection..."
+        bar = st.progress(0, text=progress_text)
+        
+        def update_progress(val, text):
+            bar.progress(val, text=text)
 
-    try:
-        update_progress(20, "Uploading Asset to Node...")
-        # ... your upload logic ...
+        max_retries = 3
+        retry_delay = 4
         
-        update_progress(50, "Calibrating Neural Matrices...")
-        # ... your calibration logic ...
-        
-        update_progress(80, "Running Virality Audit...")
-        # ... your generation logic ...
-        
-        update_progress(100, "Audit Complete.")
-        st.session_state[f"dash_report_{i}"] = response.text
-        
-    except Exception as error:
-        st.error(f"System Exception: {error}")
-    finally:
-        # Optional: hide the bar after 2 seconds
-        time.sleep(2)
-        bar.empty()
+        for attempt in range(max_retries):
+            try:
+                update_progress(20, "Uploading Asset to Node...")
+                with open(temp_filename, "wb") as f: 
+                    f.write(uploaded_file.getbuffer())
+                
+                client = genai.Client(api_key=api_key)
+                uploaded_ai_file = client.files.upload(file=temp_filename)
+                
+                update_progress(50, "Calibrating Neural Matrices...")
+                while not uploaded_ai_file.state or uploaded_ai_file.state.name != "ACTIVE":
+                    time.sleep(2)
+                    uploaded_ai_file = client.files.get(name=uploaded_ai_file.name)
+                
+                update_progress(80, "Running Virality Audit...")
+                # ... (rest of your existing logic) ...
+                
+                response = client.models.generate_content(...)
+                
+                update_progress(100, "Audit Complete.")
+                st.session_state[f"dash_report_{i}"] = response.text
+                
+                break
             except Exception as error:
-                gauge.update(value=0, label="Error encountered.")
                 st.error(f"System Exception: {error}"); break
-                            
-                            for attempt in range(max_retries):
+        
+        bar.empty() # Clear the bar when finished
+        
+                         for attempt in range(max_retries):
                                 try:
                                     with open(temp_filename, "wb") as f: 
                                         f.write(uploaded_file.getbuffer())
